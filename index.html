@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kronieka — Content Management v9.3 Final Sync</title>
+<title>Kronieka — Content Management v10 Final</title>
 
 <style>
 :root{
@@ -285,6 +285,7 @@ body{background:#f7f7f8}
 <button onclick="page('analytics',this)">Analytics</button>
 <button onclick="page('monthly',this)">Monthly Report</button>
 <button onclick="page('team',this)">Team Workspace</button>
+<button onclick="page('activity',this)">Activity Log</button>
 </div></aside>
 <main class="main" aria-label="Kronieka Content Management">
 <section id="dashboard">
@@ -295,8 +296,8 @@ body{background:#f7f7f8}
 
 <section id="content" style="display:none">
 <div class="top"><div><h1>Content Database</h1><div class="muted">Kelola seluruh konten Kronieka</div></div><button class="btn primary" onclick="openAdd()">+ Tambah Konten</button></div>
-<div class="filters"><input id="search" placeholder="Cari judul..." oninput="renderTable()"><select id="filterStatus" onchange="renderTable()"><option value="">Semua status</option></select><select id="filterFormat" onchange="renderTable()"><option value="">Semua format</option><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select><select id="filterPIC" onchange="renderTable()"><option value="">Semua PIC</option></select></div>
-<div class="tablewrap"><table><thead><tr><th>JUDUL</th><th>FORMAT</th><th>PIC</th><th>STATUS</th><th>DEADLINE</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+<div class="filters"><input id="search" placeholder="Cari judul..." oninput="renderTable()"><select id="filterStatus" onchange="renderTable()"><option value="">Semua status</option></select><select id="filterFormat" onchange="renderTable()"><option value="">Semua format</option><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select><select id="filterPIC" onchange="renderTable()"><option value="">Semua Content PIC</option></select><select id="filterDesigner" onchange="renderTable()"><option value="">Semua Designer</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>JUDUL</th><th>FORMAT</th><th>CONTENT PIC</th><th>DESIGNER</th><th>STATUS</th><th>DEADLINE</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
 </section>
 
 <section id="calendar" style="display:none">
@@ -332,7 +333,7 @@ body{background:#f7f7f8}
 </div>
 <div class="section">
 <h2>Production Queue</h2>
-<div class="tablewrap"><table><thead><tr><th>KONTEN</th><th>STATUS</th><th>PIC</th><th>PROGRES</th><th>DEADLINE</th><th></th></tr></thead><tbody id="workflowBody"></tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>KONTEN</th><th>STATUS</th><th>CONTENT PIC</th><th>DESIGNER</th><th>PROGRES</th><th>DEADLINE</th><th></th></tr></thead><tbody id="workflowBody"></tbody></table></div>
 </div>
 </section>
 
@@ -359,6 +360,11 @@ body{background:#f7f7f8}
 <div class="section"><div class="card"><h2>Management Notes</h2><div id="monthlyNotes" class="muted"></div></div></div>
 </section>
 
+<section id="activity" style="display:none">
+<div class="top"><div><h1>Activity Log</h1><div class="muted">Riwayat perubahan penting di workspace Kronieka.</div></div><button class="btn" onclick="refreshActivity()">Refresh</button></div>
+<div class="section"><div class="tablewrap"><table><thead><tr><th>WAKTU</th><th>USER</th><th>AKSI</th><th>OBJEK</th><th>DETAIL</th></tr></thead><tbody id="activityBody"></tbody></table></div></div>
+</section>
+
 <section id="team" style="display:none">
 <div class="top">
   <div><h1>Team Workspace</h1><div class="muted">Pembagian tugas dan beban kerja tim Kronieka.</div></div>
@@ -366,7 +372,7 @@ body{background:#f7f7f8}
 </div>
 <div id="teamPermissionNote" class="muted" style="margin-bottom:12px"></div>
 <div class="cards" id="teamCards"></div>
-<div class="section"><h2>Workload</h2><div class="tablewrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>AKTIF</th><th>SELESAI</th><th>OVERDUE</th><th>AKSI</th><th>AKSI</th></tr></thead><tbody id="teamBody"></tbody></table></div></div>
+<div class="section"><h2>Workload</h2><div class="tablewrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>PIC AKTIF</th><th>DESAIN AKTIF</th><th>SELESAI</th><th>OVERDUE</th><th>AKSI</th><th>AKSI</th></tr></thead><tbody id="teamBody"></tbody></table></div></div>
 </section>
 </main></div>
 
@@ -374,7 +380,7 @@ body{background:#f7f7f8}
 
 
 <script>
-/* KRONIEKA SUPABASE CONFIG — V9.3
+/* KRONIEKA SUPABASE CONFIG — V10
    Publishable/anon key is safe to use in the browser.
    NEVER put a secret/service_role key here.
 */
@@ -478,6 +484,12 @@ async function loadRemoteData(){
     supabaseClient.from('workspace_settings').select('id,monthly_target').eq('id',1).maybeSingle()
   ]);
 
+  let logResult={data:[],error:null};
+  try{ logResult=await supabaseClient.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(100); }
+  catch(e){ logResult={data:[],error:e}; }
+  if(logResult.error) console.warn('Activity Log belum tersedia:',logResult.error.message||logResult.error);
+  activityLogs=logResult.data||[];
+
   const err=[c,i,p,m,tm,ws].find(x=>x.error);
   if(err){
     remoteReady=false;
@@ -486,7 +498,7 @@ async function loadRemoteData(){
   }
 
   // Supabase is authoritative after login. Browser storage is cache only.
-  data=(c.data||[]).map(x=>({...x,checks:Array.isArray(x.checks)?x.checks:[0,0,0,0,0,0,0]}));
+  data=(c.data||[]).map(x=>({...x,content_pic:x.content_pic||x.pic||'',pic:x.content_pic||x.pic||'',designer:x.designer||null,checks:Array.isArray(x.checks)?x.checks:[0,0,0,0,0,0,0]}));
   ideas=i.data||[];
   performance=p.data||[];
   members=(tm.data||[]).map(x=>({id:x.id,name:x.name||'Tanpa nama',role:x.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE}));
@@ -533,10 +545,26 @@ async function remoteDelete(table,id){
   if(error) throw error;
 }
 
+async function writeActivity(action,entityType,entityId,details){
+  if(!remoteReady||!supabaseClient||!sessionUser)return;
+  const row={user_id:sessionUser.id,action,entity_type:entityType||null,entity_id:entityId==null?null:String(entityId),details:details||{}};
+  try{ const {data:created,error}=await supabaseClient.from('activity_logs').insert(row).select().single(); if(!error&&created){activityLogs.unshift(created);activityLogs=activityLogs.slice(0,100);renderActivity();} }
+  catch(e){ console.warn('Activity log gagal:',e.message||e); }
+}
+function renderActivity(){
+  const body=document.getElementById('activityBody'); if(!body)return;
+  body.innerHTML=activityLogs.map(l=>{const d=l.created_at?new Date(l.created_at).toLocaleString('id-ID'):'';const u=members.find(m=>m.id===l.user_id);return `<tr><td>${esc(d)}</td><td>${esc(u?.name||l.user_name||l.user_id||'—')}</td><td><b>${esc(l.action||'—')}</b></td><td>${esc((l.entity_type||'')+(l.entity_id?' #'+l.entity_id:''))}</td><td>${esc(typeof l.details==='string'?l.details:JSON.stringify(l.details||{}))}</td></tr>`}).join('')||'<tr><td colspan="5" class="muted">Belum ada aktivitas.</td></tr>';
+}
+async function refreshActivity(){if(!supabaseClient||!remoteReady)return;const {data:rows,error}=await supabaseClient.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(100);if(error)return alert('Activity Log belum tersedia: '+error.message);activityLogs=rows||[];renderActivity();}
+
 async function patchRemoteContent(x){
   return remoteUpsert('contents',{
-    id:x.id,title:x.title,format:x.format,pic:x.pic,status:x.status,
-    deadline:x.deadline||null,notes:x.notes||'',checks:x.checks||[0,0,0,0,0,0,0]
+    id:x.id,title:x.title,format:x.format,
+    pic:x.pic||x.content_pic||'',
+    content_pic:x.content_pic||x.pic||null,
+    designer:x.designer||null,
+    status:x.status,deadline:x.deadline||null,notes:x.notes||'',
+    checks:x.checks||[0,0,0,0,0,0,0]
   });
 }
 async function patchRemoteIdea(x){
@@ -571,37 +599,16 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 /* KRONIEKA V9.3 — Supabase-first workspace + Admin/Member model */
 const KEY='kronieka_v2_data';
 const statuses=['Perencanaan','Penulisan','Desain','Editing','Terbit'];
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||[
-{id:1,title:'Zubir Said',format:'Reels',pic:'Akmal',status:'Desain',deadline:'2026-09-01',notes:'Pencipta lagu Majulah Singapura',checks:[1,1,0,0,0,0,0]},
-{id:2,title:'Sejarah Tonarigumi',format:'Carousel',pic:'Writer A',status:'Penulisan',deadline:'2026-09-03',notes:'Konten sejarah organisasi lingkungan masa pendudukan Jepang',checks:[1,1,0,0,0,0,0]},
-{id:3,title:'Kemayoran dan Awal Penerbangan',format:'Reels',pic:'Editor A',status:'Terbit',deadline:'2026-09-05',notes:'',checks:[1,1,1,1,1,1,1]},
-{id:4,title:'Andir dan Polusi Suara',format:'Carousel',pic:'Akmal',status:'Perencanaan',deadline:'2026-09-08',notes:'',checks:[0,0,0,0,0,0,0]},
-{id:5,title:'Boston Tea Party',format:'Reels',pic:'Designer A',status:'Editing',deadline:'2026-09-10',notes:'',checks:[1,1,1,0,0,0,0]},
-{id:6,title:'Suez Canal',format:'Carousel',pic:'Writer B',status:'Penulisan',deadline:'2026-09-12',notes:'',checks:[1,1,0,0,0,0,0]},
-{id:7,title:'Sykes-Picot',format:'Reels',pic:'Editor B',status:'Desain',deadline:'2026-09-15',notes:'',checks:[1,1,1,0,0,0,0]},
-{id:8,title:'Supersemar',format:'Carousel',pic:'Akmal',status:'Terbit',deadline:'2026-09-17',notes:'',checks:[1,1,1,1,1,1,1]},
-{id:9,title:'Bandung dan Kereta Api',format:"Today's Tale",pic:'Writer A',status:'Terbit',deadline:'2026-09-18',notes:'',checks:[1,1,1,1,1,1,1]},
-{id:10,title:'Batik dan Industrialisasi',format:'Carousel',pic:'Writer B',status:'Editing',deadline:'2026-09-20',notes:'',checks:[1,1,1,0,0,0,0]}
-];
-let ideas=JSON.parse(localStorage.getItem('kronieka_v2_ideas')||'null')||[
-{id:1,title:'Sejarah Batik dan Industrialisasi',format:'Carousel',priority:'Tinggi',notes:'Cari sumber Scopus dan arsip kolonial'},
-{id:2,title:'Kenapa Bandung Dipilih sebagai Kota Pegunungan?',format:"Today's Tale",priority:'Sedang',notes:'Bisa dikaitkan dengan perubahan lingkungan'},
-{id:3,title:'Sejarah Penerbangan di Kemayoran',format:'Reels',priority:'Tinggi',notes:'Cari footage arsip'},
-{id:4,title:'Hari Pahlawan',format:'Postingan Hari Raya',priority:'Sedang',notes:'Siapkan minimal 2 minggu sebelum tanggal publikasi'}
-];
-;
-let performance=JSON.parse(localStorage.getItem('kronieka_v5_performance')||'null')||[
-{id:1,contentId:3,reach:85200,views:120400,likes:8500,comments:310,shares:1200,saves:2100},
-{id:2,contentId:8,reach:98000,views:145000,likes:9200,comments:420,shares:1800,saves:3400},
-{id:3,contentId:9,reach:42000,views:51000,likes:3800,comments:190,shares:800,saves:2200}
-];
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||[];
+let ideas=JSON.parse(localStorage.getItem('kronieka_v2_ideas')||'null')||[];let performance=JSON.parse(localStorage.getItem('kronieka_v5_performance')||'null')||[];
 
 // Anggota tim diambil dari Supabase profiles.
 // Tidak lagi menggunakan daftar dummy/localStorage.
 let members=[];
+let activityLogs=[];
 function save(){ cacheLocal(); }
-function page(id,btn){document.querySelectorAll('main section').forEach(x=>x.style.display='none');document.getElementById(id).style.display='block';document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='content')renderTable();if(id==='calendar')renderCalendar();if(id==='recap')renderRecap();if(id==='monthly')renderMonthly();if(id==='team')renderTeam();if(id==='workflow')renderWorkflow();if(id==='analytics')renderAnalytics();if(id==='ideas')renderIdeas()}
-function render(){renderStats();renderFormatDashboard();renderBoard();renderTable();renderCalendar();renderRecap();populateFilters();renderIdeas();renderWorkflow();renderAnalytics();renderMonthly();renderTeam();applyPermissions()}
+function page(id,btn){document.querySelectorAll('main section').forEach(x=>x.style.display='none');document.getElementById(id).style.display='block';document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='content')renderTable();if(id==='calendar')renderCalendar();if(id==='recap')renderRecap();if(id==='monthly')renderMonthly();if(id==='team')renderTeam();if(id==='activity')renderActivity();if(id==='workflow')renderWorkflow();if(id==='analytics')renderAnalytics();if(id==='ideas')renderIdeas()}
+function render(){renderStats();renderFormatDashboard();renderBoard();renderTable();renderCalendar();renderRecap();populateFilters();renderIdeas();renderWorkflow();renderAnalytics();renderMonthly();renderTeam();renderActivity();applyPermissions()}
 function renderFormatDashboard(){
 let formats=['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'];
 document.getElementById('formatDashboard').innerHTML=formats.map(f=>{
@@ -622,12 +629,12 @@ function openIdea(){modalContent.innerHTML=`<h2>Tambah Ide</h2><div class="form"
 async function createIdea(){
   let t=ititle.value.trim(); if(!t)return alert('Judul ide wajib diisi.');
   const item={id:Date.now(),title:t,format:iformat.value,priority:ipriority.value,notes:inotes.value};
-  try{await patchRemoteIdea(item);ideas.push(item);save();closeModal();renderIdeas();}
+  try{await patchRemoteIdea(item);ideas.push(item);save();await writeActivity('CREATE','idea',item.id,{title:item.title});closeModal();renderIdeas();}
   catch(e){alert('Gagal menyimpan ide ke Supabase: '+e.message);}
 }
 async function deleteIdea(id){
   if(!confirm('Hapus ide ini?'))return;
-  try{await remoteDelete('ideas',id);ideas=ideas.filter(x=>x.id!==id);save();renderIdeas();}
+  try{const old=ideas.find(x=>x.id===id);await remoteDelete('ideas',id);ideas=ideas.filter(x=>x.id!==id);save();await writeActivity('DELETE','idea',id,{title:old?.title||''});renderIdeas();}
   catch(e){alert('Gagal menghapus ide dari Supabase: '+e.message);}
 }
 async function promoteIdea(id){
@@ -636,7 +643,7 @@ async function promoteIdea(id){
   try{
     await patchRemoteContent(item);
     await remoteDelete('ideas',id);
-    data.push(item);ideas=ideas.filter(a=>a.id!==id);save();render();alert('Ide dipindahkan ke Content Pipeline.');
+    data.push(item);ideas=ideas.filter(a=>a.id!==id);save();await writeActivity('PROMOTE','idea',id,{title:item.title});render();alert('Ide dipindahkan ke Content Pipeline.');
   }catch(e){alert('Gagal memindahkan ide: '+e.message);}
 }
 
@@ -660,12 +667,12 @@ modalContent.innerHTML=`<h2>Tambah Data Performa</h2><div class="form"><label>Ko
 async function createPerformance(){
   if(!pcontent.value)return alert('Belum ada konten terbit.');
   const item={id:Date.now(),contentId:+pcontent.value,reach:+preach.value||0,views:+pviews.value||0,likes:+plikes.value||0,comments:+pcomments.value||0,shares:+pshares.value||0,saves:+psaves.value||0};
-  try{await patchRemotePerformance(item);performance.push(item);save();closeModal();renderAnalytics();}
+  try{await patchRemotePerformance(item);performance.push(item);save();await writeActivity('CREATE','performance',item.id,{content_id:item.contentId});closeModal();renderAnalytics();}
   catch(e){alert('Gagal menyimpan performa ke Supabase: '+e.message);}
 }
 async function deletePerformance(id){
   if(!confirm('Hapus data performa ini?'))return;
-  try{await remoteDelete('performance',id);performance=performance.filter(x=>x.id!==id);save();renderAnalytics();}
+  try{await remoteDelete('performance',id);performance=performance.filter(x=>x.id!==id);save();await writeActivity('DELETE','performance',id,{});renderAnalytics();}
   catch(e){alert('Gagal menghapus performa dari Supabase: '+e.message);}
 }
 function renderWorkflow(){
@@ -675,11 +682,11 @@ workflowSteps.innerHTML=labels.map((x,i)=>`<div class="recapline"><span>${i+1}. 
 let active=data.filter(x=>x.status!=='Terbit');
 attention.innerHTML=active.length?active.slice(0,6).map(x=>{
 let pct=Math.round(x.checks.filter(Boolean).length/7*100);
-return `<div class="recapline"><span><b>${x.title}</b><br><span class="muted">${x.status} · ${x.pic}</span></span><b>${pct}%</b></div>`;
+return `<div class="recapline"><span><b>${x.title}</b><br><span class="muted">${x.status} · PIC: ${x.content_pic||x.pic||'—'} · Designer: ${x.designer||'—'}</span></span><b>${pct}%</b></div>`;
 }).join(''):'<div class="muted">Semua konten selesai.</div>';
 workflowBody.innerHTML=data.map(x=>{
 let done=x.checks.filter(Boolean).length,pct=Math.round(done/7*100);
-return `<tr><td><b>${x.title}</b></td><td>${x.status}</td><td>${x.pic}</td><td>${done}/7 (${pct}%)</td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Checklist</button></td></tr>`;
+return `<tr><td><b>${x.title}</b></td><td>${x.status}</td><td>${x.content_pic||x.pic||'—'}</td><td>${x.designer||'—'}</td><td>${done}/7 (${pct}%)</td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Checklist</button></td></tr>`;
 }).join('');
 }
 
@@ -687,26 +694,28 @@ function renderTeam(){
   if(!document.getElementById('teamBody'))return;
 
   teamCards.innerHTML=members.map(m=>{
-    let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
-    let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
+    let active=data.filter(x=>(x.content_pic||x.pic)===m.name&&x.status!=='Terbit').length;
+    let done=data.filter(x=>(x.content_pic||x.pic)===m.name&&x.status==='Terbit').length;
+    let design=data.filter(x=>x.designer===m.name&&x.status!=='Terbit').length;
     return `<div class="card">
       <div class="label">${esc(m.role.toUpperCase())}</div>
       <div class="big" style="font-size:20px">${esc(m.name)}</div>
-      <div class="muted">${active} aktif · ${done} selesai</div>
+      <div class="muted">${active} PIC aktif · ${design} desain aktif · ${done} selesai</div>
       ${isAdmin() && m.id!==sessionUser?.id ? `<div class="actions" style="margin-top:12px"><button class="btn" onclick="changeMemberRole('${m.id}')">Ubah Role</button><button class="btn" onclick="deleteMember('${m.id}')">Hapus</button></div>` : ''}
     </div>`;
   }).join('') || '<div class="muted">Belum ada anggota yang terdaftar di Supabase.</div>';
 
-  let today='2026-09-01';
+  let today=new Date().toISOString().slice(0,10);
   teamBody.innerHTML=members.map(m=>{
-    let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
-    let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
-    let overdue=data.filter(x=>x.pic===m.name&&x.status!=='Terbit'&&x.deadline<today).length;
+    let active=data.filter(x=>(x.content_pic||x.pic)===m.name&&x.status!=='Terbit').length;
+    let done=data.filter(x=>(x.content_pic||x.pic)===m.name&&x.status==='Terbit').length;
+    let design=data.filter(x=>x.designer===m.name&&x.status!=='Terbit').length;
+    let overdue=data.filter(x=>(x.content_pic||x.pic)===m.name&&x.status!=='Terbit'&&x.deadline&&x.deadline<today).length;
     let action=isAdmin() && m.id!==sessionUser?.id
       ? `<div class="actions"><button class="btn" style="padding:5px 8px" onclick="changeMemberRole('${m.id}')">Role</button><button class="btn" style="padding:5px 8px" onclick="deleteMember('${m.id}')">Hapus</button></div>`
       : '<span class="muted">—</span>';
-    return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${active}</td><td>${done}</td><td>${overdue}</td><td>${action}</td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="muted">Belum ada anggota yang terdaftar.</td></tr>';
+    return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${active}</td><td>${design}</td><td>${done}</td><td>${overdue}</td><td>${action}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted">Belum ada anggota yang terdaftar.</td></tr>';
 }
 
 function openMember(){
@@ -751,6 +760,7 @@ async function deleteMember(id){
   try{
     await remoteDelete('profiles',id);
     members=members.filter(m=>m.id!==id);
+    await writeActivity('DELETE','profile',id,{name:member.name});
     renderTeam();
     alert('Profil anggota berhasil dihapus dari Supabase. Akun Authentication tetap ada.');
   }catch(e){alert('Gagal menghapus anggota dari Supabase: '+e.message+'\n\nJika error menyebut RLS/policy, jalankan SQL patch V9.3 yang disediakan bersama file ini.');}
@@ -763,7 +773,7 @@ async function changeMonthlyTarget(){
   if(!Number.isInteger(n) || n<1 || n>10000)return alert('Masukkan angka bulat antara 1 dan 10000.');
   try{
     await remoteUpsert('workspace_settings',{id:workspaceSettingsId||1,monthly_target:n});
-    MONTHLY_TARGET=n;cacheLocal();renderMonthly();renderRecap();
+    const before=MONTHLY_TARGET;MONTHLY_TARGET=n;cacheLocal();await writeActivity('TARGET_CHANGE','workspace_settings',workspaceSettingsId,{from:before,to:n});renderMonthly();renderRecap();
     alert('Target berhasil disimpan ke Supabase.');
   }catch(e){alert('Target TIDAK diubah karena gagal disimpan ke Supabase: '+e.message);}
 }
@@ -773,54 +783,56 @@ if(!document.getElementById('monthlyCards'))return;
 let total=data.length,pub=data.filter(x=>x.status==='Terbit').length,target=MONTHLY_TARGET,completion=Math.round(pub/target*100);
 let avgER=performance.length?performance.reduce((a,x)=>a+er(x),0)/performance.length:0;
 monthlyCards.innerHTML=[['TOTAL KONTEN',total],['TERBIT',pub],['TARGET',target],['ACHIEVEMENT',completion+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');
-let delayed=data.filter(x=>x.status!=='Terbit'&&x.deadline<'2026-09-01').length;
+let delayed=data.filter(x=>x.status!=='Terbit'&&x.deadline&&x.deadline<new Date().toISOString().slice(0,10)).length;
 monthlyProduction.innerHTML=`<div class="recapline"><span>Konten selesai</span><b>${pub}</b></div><div class="recapline"><span>Masih diproses</span><b>${data.filter(x=>x.status!=='Terbit').length}</b></div><div class="recapline"><span>Belum mulai</span><b>${data.filter(x=>x.status==='Perencanaan').length}</b></div><div class="recapline"><span>Terlambat</span><b>${delayed}</b></div>`;
 monthlyPerformance.innerHTML=`<div class="recapline"><span>Konten dianalisis</span><b>${performance.length}</b></div><div class="recapline"><span>Average ER</span><b>${avgER.toFixed(2)}%</b></div><div class="recapline"><span>Total reach</span><b>${fmt(performance.reduce((a,x)=>a+x.reach,0))}</b></div>`;
 let best=performance.length?[...performance].sort((a,b)=>er(b)-er(a))[0]:null,c=best?data.find(x=>x.id===best.contentId):null;
 monthlyNotes.innerHTML=best?`Top content berdasarkan ER: <b>${c?c.title:'-'}</b> (${er(best).toFixed(2)}%). Bulan berikutnya, evaluasi format dan topik konten ini untuk direplikasi.`:'Belum cukup data performa untuk membuat rekomendasi.';
 }
 function renderStats(){let total=data.length,pub=data.filter(x=>x.status==='Terbit').length,processing=data.filter(x=>!['Terbit','Perencanaan'].includes(x.status)).length,plan=data.filter(x=>x.status==='Perencanaan').length;document.getElementById('stats').innerHTML=[['TOTAL KONTEN',total,100],['TERBIT',pub,total?pub/total*100:0],['SEDANG DIPROSES',processing,total?processing/total*100:0],['PERENCANAAN',plan,total?plan/total*100:0]].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div><div class="bar"><i style="width:${x[2]}%"></i></div></div>`).join('')}
-function renderBoard(){document.getElementById('board').innerHTML=statuses.map(s=>`<div class="col" data-status="${s}" ondragover="allow(event)" ondrop="drop(event,'${s}')" ondragleave="leave(event)"><div class="colhead">${s}<span class="count">${data.filter(x=>x.status===s).length}</span></div>${data.filter(x=>x.status===s).map(x=>`<div class="item" draggable="true" ondragstart="drag(event,${x.id})" onclick="detail(${x.id})"><b>${x.title}</b><div class="meta">${x.format} · ${x.pic}<br>Deadline: ${x.deadline.slice(8,10)}/${x.deadline.slice(5,7)}</div><span class="tag">${x.checks.filter(Boolean).length}/7 checklist</span></div>`).join('')||'<div class="empty">Belum ada konten</div>'}</div>`).join('')}
+function renderBoard(){document.getElementById('board').innerHTML=statuses.map(s=>`<div class="col" data-status="${s}" ondragover="allow(event)" ondrop="drop(event,'${s}')" ondragleave="leave(event)"><div class="colhead">${s}<span class="count">${data.filter(x=>x.status===s).length}</span></div>${data.filter(x=>x.status===s).map(x=>`<div class="item" draggable="true" ondragstart="drag(event,${x.id})" onclick="detail(${x.id})"><b>${x.title}</b><div class="meta">${x.format} · PIC: ${x.content_pic||x.pic||'—'} · Designer: ${x.designer||'—'}<br>Deadline: ${x.deadline.slice(8,10)}/${x.deadline.slice(5,7)}</div><span class="tag">${x.checks.filter(Boolean).length}/7 checklist</span></div>`).join('')||'<div class="empty">Belum ada konten</div>'}</div>`).join('')}
 function drag(e,id){e.dataTransfer.setData('id',id)} function allow(e){e.preventDefault();e.currentTarget.classList.add('drag')} function leave(e){e.currentTarget.classList.remove('drag')} async function drop(e,status){
   e.preventDefault();let id=+e.dataTransfer.getData('id'),x=data.find(a=>a.id===id);
   if(x && x.status!==status){const old=x.status;x.status=status;
-    try{await patchRemoteContent(x);save();render();}
+    try{await patchRemoteContent(x);save();await writeActivity('STATUS_CHANGE','content',id,{title:x.title,status_from:old,status_to:status});render();}
     catch(err){x.status=old;alert('Status tidak berubah karena gagal disimpan ke Supabase: '+err.message);}
   }
   e.currentTarget.classList.remove('drag');
 }
-function populateFilters(){filterStatus.innerHTML='<option value="">Semua status</option>'+statuses.map(x=>`<option>${x}</option>`).join('');let pics=[...new Set(data.map(x=>x.pic))];filterPIC.innerHTML='<option value="">Semua PIC</option>'+pics.map(x=>`<option>${x}</option>`).join('')}
-function renderTable(){if(!tbody)return;let q=(search?.value||'').toLowerCase(),s=filterStatus?.value||'',f=filterFormat?.value||'',p=filterPIC?.value||'';let rows=data.filter(x=>(!q||x.title.toLowerCase().includes(q))&&(!s||x.status===s)&&(!f||x.format===f)&&(!p||x.pic===p));tbody.innerHTML=rows.map(x=>`<tr><td><b>${x.title}</b></td><td>${x.format}</td><td>${x.pic}</td><td><span class="status">${x.status}</span></td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Detail</button></td></tr>`).join('')||'<tr><td colspan="6">Tidak ada data.</td></tr>'}
-function detail(id){let x=data.find(a=>a.id===id);modalContent.innerHTML=`<h2 style="margin:0 0 5px">${x.title}</h2><div class="muted">${x.format} · ${x.pic} · ${x.status}</div><hr><p><b>Deadline:</b> ${x.deadline}</p><p>${x.notes||'Tidak ada catatan.'}</p><p><b>Progres:</b> ${x.checks.filter(Boolean).length}/7 tahap selesai</p><h4>Checklist Produksi</h4><div class="checks">${['Riset / sumber','Penulisan / script','Fact check','Desain / produksi','QC akhir','Caption & schedule','Publish'].map((c,i)=>`<label><input type="checkbox" ${x.checks[i]?'checked':''} onchange="toggleCheck(${id},${i},this.checked)"> ${c}</label>`).join('')}</div><div class="actions" style="margin-top:18px"><button class="btn" onclick="editContent(${id})">Edit</button><button class="btn" onclick="removeContent(${id})">Hapus</button></div>`;modal.classList.add('show')}
+function populateFilters(){filterStatus.innerHTML='<option value="">Semua status</option>'+statuses.map(x=>`<option>${x}</option>`).join('');let pics=[...new Set(data.map(x=>x.content_pic||x.pic).filter(Boolean))];let designers=[...new Set(data.map(x=>x.designer).filter(Boolean))];filterPIC.innerHTML='<option value="">Semua Content PIC</option>'+pics.map(x=>`<option>${esc(x)}</option>`).join('');filterDesigner.innerHTML='<option value="">Semua Designer</option>'+designers.map(x=>`<option>${esc(x)}</option>`).join('')}
+function renderTable(){if(!tbody)return;let q=(search?.value||'').toLowerCase(),s=filterStatus?.value||'',f=filterFormat?.value||'',p=filterPIC?.value||'',d=filterDesigner?.value||'';let rows=data.filter(x=>(!q||x.title.toLowerCase().includes(q))&&(!s||x.status===s)&&(!f||x.format===f)&&(!p||(x.content_pic||x.pic)===p)&&(!d||x.designer===d));tbody.innerHTML=rows.map(x=>`<tr><td><b>${x.title}</b></td><td>${x.format}</td><td>${x.content_pic||x.pic||'—'}</td><td>${x.designer||'—'}</td><td><span class="status">${x.status}</span></td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Detail</button></td></tr>`).join('')||'<tr><td colspan="7">Tidak ada data.</td></tr>'}
+function detail(id){let x=data.find(a=>a.id===id);modalContent.innerHTML=`<h2 style="margin:0 0 5px">${x.title}</h2><div class="muted">${x.format} · ${x.content_pic||x.pic||'—'} · Designer: ${x.designer||'—'} · ${x.status}</div><hr><p><b>Deadline:</b> ${x.deadline}</p><p>${x.notes||'Tidak ada catatan.'}</p><p><b>Progres:</b> ${x.checks.filter(Boolean).length}/7 tahap selesai</p><h4>Checklist Produksi</h4><div class="checks">${['Riset / sumber','Penulisan / script','Fact check','Desain / produksi','QC akhir','Caption & schedule','Publish'].map((c,i)=>`<label><input type="checkbox" ${x.checks[i]?'checked':''} onchange="toggleCheck(${id},${i},this.checked)"> ${c}</label>`).join('')}</div><div class="actions" style="margin-top:18px"><button class="btn" onclick="editContent(${id})">Edit</button><button class="btn" onclick="removeContent(${id})">Hapus</button></div>`;modal.classList.add('show')}
 async function toggleCheck(id,i,v){
   let x=data.find(a=>a.id===id);if(!x)return;const old=x.checks[i];x.checks[i]=v?1:0;
-  try{await patchRemoteContent(x);save();renderBoard();}
+  try{await patchRemoteContent(x);save();await writeActivity('CHECKLIST','content',id,{title:x.title,step:i+1,checked:!!v});renderBoard();}
   catch(e){x.checks[i]=old;alert('Checklist tidak tersimpan ke Supabase: '+e.message);renderBoard();}
 }
-function openAdd(){modalContent.innerHTML=`<h2>Tambah Konten</h2><div class="form"><label>Judul<input id="ftitle"></label><label>Format<select id="fformat"><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>PIC<input id="fpic" placeholder="Nama PIC"></label><label>Status<select id="fstatus">${statuses.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Deadline<input id="fdeadline" type="date"></label><label>Catatan<textarea id="fnotes"></textarea></label><button class="btn primary" onclick="createContent()">Simpan Konten</button></div>`;modal.classList.add('show')}
+function openAdd(){
+  const opts=members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
+  modalContent.innerHTML=`<h2>Tambah Konten</h2><div class="form"><label>Judul<input id="ftitle"></label><label>Format<select id="fformat"><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>Content PIC<input id="fcontentpic" value="${esc(currentName||'Akun saya')}" readonly></label><label>Designer<select id="fdesigner"><option value="">Belum ditentukan</option>${opts}</select></label><label>Status<select id="fstatus">${statuses.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Deadline<input id="fdeadline" type="date"></label><label>Catatan<textarea id="fnotes"></textarea></label><button class="btn primary" onclick="createContent()">Simpan Konten</button></div>`;modal.classList.add('show')}
 async function createContent(){
   let t=ftitle.value.trim();if(!t)return alert('Judul wajib diisi.');
-  const item={id:Date.now(),title:t,format:fformat.value,pic:fpic.value||'Belum ditentukan',status:fstatus.value,deadline:fdeadline.value||'2026-09-30',notes:fnotes.value,checks:[0,0,0,0,0,0,0]};
-  try{await patchRemoteContent(item);data.push(item);save();closeModal();render();}
-  catch(e){alert('Konten TIDAK disimpan karena gagal ke Supabase: '+e.message);}
-}
-function editContent(id){let x=data.find(a=>a.id===id);modalContent.innerHTML=`<h2>Edit Konten</h2><div class="form"><label>Judul<input id="etitle" value="${esc(x.title)}"></label><label>Format<select id="eformat">${['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>PIC<input id="epic" value="${esc(x.pic)}"></label><label>Status<select id="estatus">${statuses.map(v=>`<option ${v===x.status?'selected':''}>${v}</option>`).join('')}</select></label><label>Deadline<input id="edeadline" type="date" value="${x.deadline}"></label><label>Catatan<textarea id="enotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateContent(${id})">Simpan Perubahan</button></div>`}
+  const cp=fcontentpic.value||currentName||'Belum ditentukan';
+  const item={id:Date.now(),title:t,format:fformat.value,content_pic:cp,pic:cp,designer:fdesigner.value||null,status:fstatus.value,deadline:fdeadline.value||null,notes:fnotes.value,checks:[0,0,0,0,0,0,0]};
+  try{await patchRemoteContent(item);data.push(item);save();await writeActivity('CREATE','content',item.id,{title:item.title,content_pic:item.content_pic,designer:item.designer});closeModal();render();}
+  catch(e){alert('Konten TIDAK disimpan karena gagal ke Supabase: '+e.message);}}
+function editContent(id){let x=data.find(a=>a.id===id);const opts=members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');modalContent.innerHTML=`<h2>Edit Konten</h2><div class="form"><label>Judul<input id="etitle" value="${esc(x.title)}"></label><label>Format<select id="eformat">${['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>Content PIC<input id="econtentpic" value="${esc(x.content_pic||x.pic||currentName||'Belum ditentukan')}" readonly></label><label>Designer<select id="edesigner"><option value="">Belum ditentukan</option>${opts}</select></label><label>Status<select id="estatus">${statuses.map(v=>`<option ${v===x.status?'selected':''}>${v}</option>`).join('')}</select></label><label>Deadline<input id="edeadline" type="date" value="${x.deadline||''}"></label><label>Catatan<textarea id="enotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateContent(${id})">Simpan Perubahan</button></div>`;edesigner.value=x.designer||'';modal.classList.add('show')}
 async function updateContent(id){
   let x=data.find(a=>a.id===id);if(!x)return;const old={...x};
-  x.title=etitle.value.trim();x.format=eformat.value;x.pic=epic.value||'Belum ditentukan';x.status=estatus.value;x.deadline=edeadline.value;x.notes=enotes.value;
-  try{await patchRemoteContent(x);save();closeModal();render();}
+  x.title=etitle.value.trim();x.format=eformat.value;x.content_pic=x.content_pic||x.pic||currentName||'Belum ditentukan';x.pic=x.content_pic;x.designer=edesigner.value||null;x.status=estatus.value;x.deadline=edeadline.value||null;x.notes=enotes.value;
+  try{await patchRemoteContent(x);save();await writeActivity('UPDATE','content',id,{title:x.title,content_pic:x.content_pic,designer:x.designer,status:x.status});closeModal();render();}
   catch(e){Object.assign(x,old);alert('Perubahan TIDAK disimpan ke Supabase: '+e.message);}
 }
 async function removeContent(id){
   if(!confirm('Hapus konten ini?'))return;
-  try{await remoteDelete('contents',id);data=data.filter(x=>x.id!==id);save();closeModal();render();}
+  try{await remoteDelete('contents',id);data=data.filter(x=>x.id!==id);save();await writeActivity('DELETE','content',id,{title:x?.title||''});closeModal();render();}
   catch(e){alert('Konten TIDAK dihapus karena gagal dihapus dari Supabase: '+e.message);}
 }
 function closeModal(){modal.classList.remove('show')}
 function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')}
 function renderCalendar(){let first=new Date(2026,8,1),days=new Date(2026,9,0).getDate(),start=first.getDay();start=(start+6)%7;let out=['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d=>`<div class="day" style="min-height:30px;background:#eceef1;border:0"><b>${d}</b></div>`).join('');for(let i=0;i<start;i++)out+='<div class="day" style="opacity:0"></div>';for(let d=1;d<=days;d++){let ev=data.filter(x=>+x.deadline.slice(8,10)===d);out+=`<div class="day"><strong>${d}</strong>${ev.map(x=>`<div class="event" title="${x.title}">${x.title}</div>`).join('')}</div>`}calendarGrid.innerHTML=out}
 function renderRecap(){let total=data.length,pub=data.filter(x=>x.status==='Terbit').length;recapCards.innerHTML=[['KONTEN',total],['TERBIT',pub],['TARGET',MONTHLY_TARGET],['ACHIEVEMENT',Math.round(pub/MONTHLY_TARGET*100)+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');statusRecap.innerHTML=statuses.map(s=>`<div class="recapline"><span>${s}</span><b>${data.filter(x=>x.status===s).length}</b></div>`).join('');let fs=['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'];formatRecap.innerHTML=fs.map(s=>`<div class="recapline"><span>${s}</span><b>${data.filter(x=>x.format===s).length}</b></div>`).join('')}
-function exportData(){let blob=new Blob([JSON.stringify({contents:data,ideas,performance},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kronieka-content-data.json';a.click();URL.revokeObjectURL(a.href)}
+function exportData(){let blob=new Blob([JSON.stringify({contents:data,ideas,performance,activityLogs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kronieka-content-data.json';a.click();URL.revokeObjectURL(a.href)}
 render();
 </script>
 
