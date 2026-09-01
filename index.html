@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kronieka — Content Management V10.1 Final</title>
+<title>Kronieka — Content Management V10.1 Final Fix</title>
 
 <style>
 :root{
@@ -938,7 +938,38 @@ function renderTeam(){
   const today=todayISO();teamBody.innerHTML=rows.map(m=>{const active=data.filter(x=>String(x.content_pic||x.pic)===String(m.id)&&x.status!=='Terbit').length;const done=data.filter(x=>String(x.content_pic||x.pic)===String(m.id)&&x.status==='Terbit').length;const overdue=data.filter(x=>String(x.content_pic||x.pic)===String(m.id)&&x.status!=='Terbit'&&x.deadline&&x.deadline<today).length;const actions=isAdmin()&&String(m.id)!==String(sessionUser?.id)?`<button class="btn" onclick="changeMemberRole('${escAttr(m.id)}')">Role</button> <button class="btn" onclick="deleteMember('${escAttr(m.id)}')">Hapus</button>`:'<span class="muted">—</span>';return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.email||'-')}</td><td>${esc(m.role)}</td><td>${esc(m.status||'Aktif')}</td><td>${m.joined_at?new Date(m.joined_at).toLocaleDateString('id-ID'):'-'}</td><td>${active}</td><td>${done}</td><td>${overdue}</td><td>${actions}</td></tr>`}).join('')||'<tr><td colspan="9" class="muted">Belum ada anggota.</td></tr>';
 }
 function openMember(){if(!isAdmin())return alert('Hanya Admin yang dapat mengelola anggota.');modalContent.innerHTML=`<h2>Tambah Anggota</h2><div class="permission-note">Admin memasukkan nama, email, dan role. Undangan dikirim melalui Supabase server-side. Anggota baru membuat password sendiri dari email undangan.</div><div class="form"><label>Nama Lengkap<input id="mname" placeholder="Nama lengkap anggota"></label><label>Email<input id="memail" type="email" placeholder="nama@email.com"></label><label>Role<select id="mrole"><option>Member</option><option>Admin</option></select></label><button class="btn primary" onclick="inviteMember()">Kirim Undangan</button></div>`;modal.classList.add('show')}
-async function inviteMember(){const name=mname.value.trim(),email=memail.value.trim(),role=mrole.value;if(!name||!email)return alert('Nama lengkap dan email wajib diisi.');try{if(!V101_FUNCTIONS_BASE)throw new Error('Invitation belum dikonfigurasi. Deploy Edge Function invite-member lalu isi V101_FUNCTIONS_BASE di HTML.');const res=await fetch(V101_FUNCTIONS_BASE.replace(/\/$/,'')+'/invite-member',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionUser?.access_token||''}`},body:JSON.stringify({name,email,role})});const out=await res.json();if(!res.ok)throw new Error(out.error||'Undangan gagal dikirim.');await writeActivity('INVITE','team',out.user_id||email,{name,email,role});closeModal();await refreshRemote();alert('✓ Undangan berhasil dikirim ke '+email)}catch(e){alert('⚠ '+e.message)}}
+async function inviteMember(){
+  const name=document.getElementById('mname')?.value.trim();
+  const email=document.getElementById('memail')?.value.trim();
+  const role=document.getElementById('mrole')?.value;
+  if(!name||!email)return alert('Nama lengkap dan email wajib diisi.');
+  if(!supabaseClient||!sessionUser)return alert('Sesi Supabase belum siap. Silakan login ulang.');
+  const btn=document.querySelector('#modalContent .btn.primary');
+  const done=withBusy(btn,'Mengirim...');
+  try{
+    const {data:out,error}=await supabaseClient.functions.invoke('invite-member',{
+      body:{name,email,role}
+    });
+    if(error){
+      let detail=error.message||'Undangan gagal dikirim.';
+      if(/fetch|cors|network/i.test(detail)){
+        detail='Tidak dapat menghubungi Edge Function. Pastikan CORS/OPTIONS pada invite-member sudah dikonfigurasi.';
+      }
+      throw new Error(detail);
+    }
+    if(!out?.success){
+      throw new Error(out?.error||'Undangan gagal dikirim.');
+    }
+    await writeActivity('INVITE','team',out.user_id||email,{name,email,role});
+    closeModal();
+    await refreshRemote();
+    alert('✓ Undangan berhasil dikirim ke '+email);
+  }catch(e){
+    alert('⚠ '+e.message);
+  }finally{
+    done();
+  }
+}
 async function refreshMembers(){await refreshRemote();}
 async function changeMemberRole(id){if(!isAdmin())return alert('Hanya Admin.');if(String(id)===String(sessionUser?.id))return alert('Admin tidak dapat mengubah role dirinya sendiri.');const m=memberById(id);if(!m)return;const role=prompt(`Role untuk ${m.name}:`,m.role);if(!role||!['Admin','Member'].includes(role.trim()))return alert('Role hanya boleh Admin atau Member.');try{await remoteUpsert('profiles',{id:m.id,name:m.name,role:role.trim()});await writeActivity('ROLE','team',id,{name:m.name,role:role.trim()});await refreshRemote();alert('✓ Role tersimpan')}catch(e){alert('⚠ Gagal mengubah role: '+e.message)}}
 async function deleteMember(id){if(!isAdmin())return alert('Hanya Admin.');if(String(id)===String(sessionUser?.id))return alert('Admin tidak dapat menghapus dirinya sendiri.');const m=memberById(id);if(!m)return;if(!confirm(`Hapus “${m.name}” dari Team Workspace?`))return;try{if(V101_FUNCTIONS_BASE){const res=await fetch(V101_FUNCTIONS_BASE.replace(/\/$/,'')+'/delete-member',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionUser?.access_token||''}`},body:JSON.stringify({user_id:id})});const out=await res.json();if(!res.ok)throw new Error(out.error||'Penghapusan gagal.')}else{await remoteDelete('profiles',id)}await writeActivity('DELETE','team',id,{name:m.name});await refreshRemote();alert('✓ Anggota berhasil dihapus')}catch(e){alert('⚠ Gagal menghapus anggota: '+e.message)}}
