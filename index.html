@@ -245,6 +245,9 @@ body{background:#f7f7f8}
 .role-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f0f1f3;font-weight:700}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .permission-note{padding:10px 12px;background:#f7f7f8;border:1px solid #e5e7eb;border-radius:9px;margin-bottom:12px}
+
+/* V9.1 Team Workspace */
+.team-delete{color:var(--accent-dark)}
 </style>
 
 </head>
@@ -363,7 +366,7 @@ body{background:#f7f7f8}
 </div>
 <div id="teamPermissionNote" class="muted" style="margin-bottom:12px"></div>
 <div class="cards" id="teamCards"></div>
-<div class="section"><h2>Workload</h2><div class="tablewrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>AKTIF</th><th>SELESAI</th><th>OVERDUE</th></tr></thead><tbody id="teamBody"></tbody></table></div></div>
+<div class="section"><h2>Workload</h2><div class="tablewrap"><table><thead><tr><th>NAMA</th><th>PERAN</th><th>AKTIF</th><th>SELESAI</th><th>OVERDUE</th><th>AKSI</th></tr></thead><tbody id="teamBody"></tbody></table></div></div>
 </section>
 </main></div>
 
@@ -465,19 +468,21 @@ function applyPermissions(){
 async function loadRemoteData(){
   if(!supabaseClient || !sessionUser) return;
 
-  const [c,i,p,m]=await Promise.all([
+  const [c,i,p,m,tm]=await Promise.all([
     supabaseClient.from('contents').select('*').order('id'),
     supabaseClient.from('ideas').select('*').order('id'),
     supabaseClient.from('performance').select('*').order('id'),
-    supabaseClient.from('profiles').select('id,name,role').eq('id',sessionUser.id).maybeSingle()
+    supabaseClient.from('profiles').select('id,name,role').eq('id',sessionUser.id).maybeSingle(),
+    supabaseClient.from('profiles').select('id,name,role').order('name')
   ]);
 
-  const err=[c,i,p,m].find(x=>x.error);
+  const err=[c,i,p,m,tm].find(x=>x.error);
   if(err){alert('Gagal membaca database: '+err.error.message);return;}
 
   data=(c.data||[]).map(x=>({...x,checks:Array.isArray(x.checks)?x.checks:[0,0,0,0,0,0,0]}));
   ideas=i.data||[];
   performance=p.data||[];
+  members=(tm.data||[]).map(x=>({id:x.id,name:x.name||'Tanpa nama',role:x.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE}));
 
   const profile=m.data;
   currentRole=profile?.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE;
@@ -485,6 +490,7 @@ async function loadRemoteData(){
   currentUser.innerHTML=`${esc(currentName)} · <span class="role-badge">${esc(currentRole)}</span>`;
 
   remoteReady=true;
+  applyPermissions();
   render();
 }
 
@@ -594,14 +600,9 @@ let performance=JSON.parse(localStorage.getItem('kronieka_v5_performance')||'nul
 {id:3,contentId:9,reach:42000,views:51000,likes:3800,comments:190,shares:800,saves:2200}
 ];
 
-let members=JSON.parse(localStorage.getItem('kronieka_v9_members')||'null')||[
- {id:1,name:'Akmal',role:'Admin'},
- {id:2,name:'Peneliti A',role:'Member'},
- {id:3,name:'Writer A',role:'Member'},
- {id:4,name:'Designer A',role:'Member'},
- {id:5,name:'Editor A',role:'Member'},
- {id:6,name:'Social Media A',role:'Member'}
-];
+// Anggota tim diambil dari Supabase profiles.
+// Tidak lagi menggunakan daftar dummy/localStorage.
+let members=[];
 function save(){
   localStorage.setItem(KEY,JSON.stringify(data));
   localStorage.setItem('kronieka_v2_ideas',JSON.stringify(ideas));
@@ -671,16 +672,24 @@ function renderTeam(){
   teamCards.innerHTML=members.map(m=>{
     let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
     let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
-    return `<div class="card"><div class="label">${esc(m.role.toUpperCase())}</div><div class="big" style="font-size:20px">${esc(m.name)}</div><div class="muted">${active} aktif · ${done} selesai</div></div>`;
-  }).join('');
+    return `<div class="card">
+      <div class="label">${esc(m.role.toUpperCase())}</div>
+      <div class="big" style="font-size:20px">${esc(m.name)}</div>
+      <div class="muted">${active} aktif · ${done} selesai</div>
+      ${isAdmin() && m.id!==sessionUser?.id ? `<button class="btn" style="margin-top:12px" onclick="deleteMember('${m.id}')">Hapus Anggota</button>` : ''}
+    </div>`;
+  }).join('') || '<div class="muted">Belum ada anggota yang terdaftar di Supabase.</div>';
 
   let today='2026-09-01';
   teamBody.innerHTML=members.map(m=>{
     let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
     let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
     let overdue=data.filter(x=>x.pic===m.name&&x.status!=='Terbit'&&x.deadline<today).length;
-    return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${active}</td><td>${done}</td><td>${overdue}</td></tr>`;
-  }).join('');
+    let action=isAdmin() && m.id!==sessionUser?.id
+      ? `<button class="btn" style="padding:5px 8px" onclick="deleteMember('${m.id}')">Hapus</button>`
+      : '<span class="muted">—</span>';
+    return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${active}</td><td>${done}</td><td>${overdue}</td><td>${action}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="muted">Belum ada anggota yang terdaftar.</td></tr>';
 }
 
 function openMember(){
@@ -697,12 +706,28 @@ function openMember(){
 
 function createMember(){
   if(!isAdmin()) return alert('Hanya Admin yang dapat menambah anggota.');
-  let n=mname.value.trim();
-  if(!n)return alert('Nama wajib diisi.');
-  members.push({id:Date.now(),name:n,role:mrole.value});
-  localStorage.setItem('kronieka_v9_members',JSON.stringify(members));
+  alert('Akun anggota dibuat melalui Supabase Authentication. Setelah akun dibuat dan profilnya tersedia di tabel profiles, anggota akan otomatis muncul di Team Workspace.');
   closeModal();
+}
+
+async function deleteMember(id){
+  if(!isAdmin()) return alert('Hanya Admin yang dapat menghapus anggota.');
+  if(!id || id===sessionUser?.id) return alert('Admin tidak dapat menghapus akun yang sedang digunakan.');
+  const member=members.find(m=>m.id===id);
+  if(!member) return alert('Anggota tidak ditemukan.');
+
+  const ok=confirm(`Hapus anggota "${member.name}" dari Team Workspace?\n\nProfilnya akan dihapus dari tabel profiles. Akun Authentication tidak dihapus.`);
+  if(!ok) return;
+
+  const {error}=await supabaseClient.from('profiles').delete().eq('id',id);
+  if(error){
+    console.error('Supabase delete profile:',error);
+    return alert('Gagal menghapus anggota: '+error.message+'\n\nJika muncul error permission/RLS, jalankan policy Admin pada Supabase SQL Editor.');
+  }
+
+  members=members.filter(m=>m.id!==id);
   renderTeam();
+  alert('Anggota berhasil dihapus dari Team Workspace.');
 }
 function changeMonthlyTarget(){
   if(!isAdmin()) return alert('Hanya Admin yang dapat mengubah target bulanan.');
