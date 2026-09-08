@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kronieka — Content Management V10.1 Final Fix</title>
+<title>Kronieka — Content Management V10.3 Final</title>
 
 <style>
 :root{
@@ -235,6 +235,33 @@ body{background:#f7f7f8}
   #loginScreen .login-logo{width:165px}
 }
 
+
+/* V10.2 responsive hardening */
+.mobile-menu{display:none;position:fixed;top:12px;left:12px;z-index:60;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;box-shadow:0 6px 20px rgba(20,24,30,.08);font-weight:800}
+.side.open{transform:translateX(0)!important}
+.mobile-overlay{display:none;position:fixed;inset:0;background:rgba(10,12,15,.35);z-index:2}
+.mobile-overlay.show{display:block}
+.platform-chip{display:inline-block;background:#f7f7f8;border:1px solid #e4e6ea;border-radius:999px;padding:3px 7px;font-size:10px;margin:2px 3px 2px 0}
+.metric-note{font-size:11px;color:var(--muted);line-height:1.5;padding:9px 11px;background:#fafbfc;border:1px solid #eceef1;border-radius:9px}
+@media(max-width:650px){
+  .mobile-menu{display:block}
+  .side{width:235px;transform:translateX(-105%);transition:transform .2s ease;box-shadow:10px 0 30px rgba(0,0,0,.12);z-index:50}
+  .brand{font-size:24px;text-align:left!important;margin:5px 10px 30px!important}
+  .brand img{width:auto!important;height:auto!important;object-fit:contain!important}
+  .nav button{font-size:14px;text-align:left;padding:11px 13px}
+  .nav button::before{content:none}
+  .main{margin-left:0;width:100%;padding:72px 12px 70px}
+  #userbar{right:10px!important;top:10px!important;max-width:calc(100% - 58px);font-size:11px!important}
+  #userbar #currentUser{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .top{gap:10px}
+  .top .actions{width:100%}
+  .top .actions .btn{flex:1;min-width:0}
+  .grid2{grid-template-columns:1fr}
+  .monthgrid{grid-template-columns:repeat(2,1fr)}
+  .modalbox{padding:18px}
+  #syncStrip{left:12px!important;right:12px!important}
+}
+
 </style>
 
 
@@ -256,7 +283,7 @@ body{background:#f7f7f8}
 </style>
 
 </head>
-<body>
+<body><button class="mobile-menu" id="mobileMenuBtn" aria-label="Buka menu" onclick="toggleMobileNav()">☰ Menu</button><div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileNav(false)"></div>
 <div id="loginScreen" style="position:fixed;inset:0;z-index:9999;background:#f5f6f8;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="width:min(420px,100%);background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:30px;box-shadow:0 12px 40px #0001">
     <img class="login-logo" src="data:image/png;base64,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" alt="kronieka.">
@@ -319,8 +346,8 @@ body{background:#f7f7f8}
 
 <section id="content" style="display:none">
 <div class="top"><div><h1>Content Database</h1><div class="muted">Kelola seluruh konten Kronieka</div></div><button class="btn primary" onclick="openAdd()">+ Tambah Konten</button></div>
-<div class="filters"><input id="search" placeholder="Cari judul..." oninput="renderTable()"><select id="filterStatus" onchange="renderTable()"><option value="">Semua status</option></select><select id="filterFormat" onchange="renderTable()"><option value="">Semua format</option><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select><select id="filterPIC" onchange="renderTable()"><option value="">Semua Content PIC</option></select><select id="filterDesigner" onchange="renderTable()"><option value="">Semua Designer</option></select></div>
-<div class="tablewrap"><table><thead><tr><th>JUDUL</th><th>FORMAT</th><th>CONTENT PIC</th><th>DESIGNER</th><th>STATUS</th><th>DEADLINE</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+<div class="filters"><input id="search" placeholder="Cari judul..." oninput="renderTable()"><select id="filterStatus" onchange="renderTable()"><option value="">Semua status</option></select><select id="filterFormat" onchange="renderTable()"><option value="">Semua format</option><option>Carousel</option><option>Video</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select><select id="filterPlatform" onchange="renderTable()"><option value="">Semua platform</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>YouTube Shorts</option><option>YouTube Video</option></select><select id="filterPIC" onchange="renderTable()"><option value="">Semua Content PIC</option></select><select id="filterDesigner" onchange="renderTable()"><option value="">Semua Designer</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>JUDUL</th><th>FORMAT</th><th>PLATFORM</th><th>CONTENT PIC</th><th>DESIGNER</th><th>STATUS</th><th>DEADLINE</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
 </section>
 
 <section id="calendar" style="display:none">
@@ -329,7 +356,7 @@ body{background:#f7f7f8}
 </section>
 
 <section id="recap" style="display:none">
-<div class="top"><div><h1>Rekap Bulanan</h1><div class="muted">September 2026 · otomatis dari database konten · target ${MONTHLY_TARGET} konten</div></div></div>
+<div class="top"><div><h1>Rekap Bulanan</h1><div class="muted" id="recapSubtitle"></div></div></div>
 <div class="cards" id="recapCards"></div>
 <div class="grid2 section"><div class="card"><h2>Status Produksi</h2><div id="statusRecap"></div></div><div class="card"><h2>Format Konten</h2><div id="formatRecap"></div></div></div>
 </section>
@@ -337,7 +364,7 @@ body{background:#f7f7f8}
 
 <section id="ideas" style="display:none">
 <div class="top"><div><h1>Idea Bank</h1><div class="muted">Simpan ide sebelum masuk ke pipeline produksi.</div></div><button class="btn primary" onclick="openIdea()">+ Tambah Ide</button></div>
-<div class="filters"><input id="ideaSearch" placeholder="Cari ide..." oninput="renderIdeas()"><select id="ideaType" onchange="renderIdeas()"><option value="">Semua format</option><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></div>
+<div class="filters"><input id="ideaSearch" placeholder="Cari ide..." oninput="renderIdeas()"><select id="ideaType" onchange="renderIdeas()"><option value="">Semua format</option><option>Carousel</option><option>Video</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></div>
 <div class="cards" id="ideaStats"></div>
 <div class="section"><div class="tablewrap"><table><thead><tr><th>IDE</th><th>FORMAT</th><th>PRIORITAS</th><th>CATATAN</th><th></th></tr></thead><tbody id="ideaBody"></tbody></table></div></div>
 </section>
@@ -361,14 +388,14 @@ body{background:#f7f7f8}
 </section>
 
 <section id="analytics" style="display:none">
-<div class="top"><div><h1>Content Analytics</h1><div class="muted">Evaluasi performa konten setelah dipublikasikan.</div></div><button class="btn primary" onclick="openPerformance()">+ Tambah Performa</button></div>
+<div class="top"><div><h1>Content Analytics</h1><div class="muted">Evaluasi performa Instagram, Facebook Page, TikTok, YouTube Shorts, dan YouTube Video. ER memakai Reach; jika Reach kosong, sistem memakai Views.</div></div><button class="btn primary" onclick="openPerformance()">+ Tambah Performa</button></div><div class="filters"><select id="analyticsPlatform" onchange="renderAnalytics()"><option value="">Semua platform</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>YouTube</option></select><select id="analyticsChannel" onchange="renderAnalytics()"><option value="">Semua channel</option></select></div>
 <div class="cards" id="analyticsCards"></div>
 <div class="grid2 section">
 <div class="card"><h2>Performa Berdasarkan Format</h2><div id="formatAnalytics"></div></div>
 <div class="card"><h2>Top Content</h2><div id="topAnalytics"></div></div>
 </div>
 <div class="section"><h2>Database Performance</h2>
-<div class="tablewrap"><table><thead><tr><th>KONTEN</th><th>FORMAT</th><th>REACH</th><th>VIEWS</th><th>LIKES</th><th>COMMENTS</th><th>SHARES</th><th>SAVES</th><th>ER</th><th></th></tr></thead><tbody id="performanceBody"></tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>KONTEN</th><th>PLATFORM</th><th>CHANNEL</th><th>TANGGAL</th><th>REACH</th><th>VIEWS</th><th>LIKES</th><th>COMMENTS</th><th>SHARES</th><th>SAVES</th><th>WATCH TIME</th><th>AVG DURASI</th><th>ER</th><th></th></tr></thead><tbody id="performanceBody"></tbody></table></div>
 </div>
 </section>
 
@@ -517,8 +544,8 @@ async function loadRemoteData(){
   }
 
   // Supabase is authoritative after login. Browser storage is cache only.
-  data=(c.data||[]).map(x=>({...x,checks:Array.isArray(x.checks)?x.checks:[0,0,0,0,0,0,0]}));
-  ideas=i.data||[];
+  data=(c.data||[]).map(x=>({...x,format:x.format==='Reels'?'Video':x.format,platforms:Array.isArray(x.platforms)?x.platforms:[],checks:Array.isArray(x.checks)?x.checks:[0,0,0,0,0,0,0]}));
+  ideas=(i.data||[]).map(x=>({...x,format:x.format==='Reels'?'Video':x.format}));
   performance=p.data||[];
   members=(tm.data||[]).map(x=>({id:x.id,name:x.name||'Tanpa nama',role:x.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE}));
 
@@ -575,8 +602,19 @@ async function patchRemoteIdea(x){
 }
 async function patchRemotePerformance(x){
   return remoteUpsert('performance',{
-    id:x.id,content_id:x.contentId,reach:x.reach||0,views:x.views||0,
-    likes:x.likes||0,comments:x.comments||0,shares:x.shares||0,saves:x.saves||0
+    id:x.id,
+    content_id:x.contentId ?? x.content_id,
+    platform:x.platform||'Instagram',
+    channel:x.channel||'',
+    published_at:x.publishedAt ?? x.published_at ?? null,
+    reach:Number(x.reach)||0,
+    views:Number(x.views)||0,
+    likes:Number(x.likes)||0,
+    comments:Number(x.comments)||0,
+    shares:Number(x.shares)||0,
+    saves:Number(x.saves)||0,
+    watch_time_minutes:Number(x.watchTimeMinutes ?? x.watch_time_minutes)||0,
+    avg_view_duration_seconds:Number(x.avgViewDurationSeconds ?? x.avg_view_duration_seconds)||0
   });
 }
 
@@ -614,7 +652,7 @@ function save(){ cacheLocal(); }
 function page(id,btn){document.querySelectorAll('main section').forEach(x=>x.style.display='none');document.getElementById(id).style.display='block';document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='content')renderTable();if(id==='calendar')renderCalendar();if(id==='recap')renderRecap();if(id==='monthly')renderMonthly();if(id==='team')renderTeam();if(id==='workflow')renderWorkflow();if(id==='analytics')renderAnalytics();if(id==='ideas')renderIdeas()}
 function render(){renderStats();renderFormatDashboard();renderBoard();renderTable();renderCalendar();renderRecap();populateFilters();renderIdeas();renderWorkflow();renderAnalytics();renderMonthly();renderTeam();applyPermissions()}
 function renderFormatDashboard(){
-let formats=['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'];
+let formats=['Carousel','Video',"Today's Tale",'Postingan Hari Raya'];
 document.getElementById('formatDashboard').innerHTML=formats.map(f=>{
 let n=data.filter(x=>x.format===f).length;
 return `<div class="card"><div class="label">${f.toUpperCase()}</div><div class="big">${n}</div><div class="muted">konten</div></div>`;
@@ -624,12 +662,12 @@ return `<div class="card"><div class="label">${f.toUpperCase()}</div><div class=
 function renderIdeas(){
 if(!document.getElementById('ideaBody')) return;
 let q=(ideaSearch?.value||'').toLowerCase(), f=ideaType?.value||'';
-let rows=ideas.filter(x=>(!q||x.title.toLowerCase().includes(q))&&(!f||x.format===f));
+let rows=ideas.filter(x=>(!q||String(x.title||'').toLowerCase().includes(q))&&(!f||x.format===f));
 ideaBody.innerHTML=rows.map(x=>`<tr><td><b>${x.title}</b></td><td>${x.format}</td><td><span class="status">${x.priority}</span></td><td>${x.notes||''}</td><td><button class="btn" onclick="promoteIdea(${x.id})">Masuk Pipeline</button> <button class="btn" onclick="deleteIdea(${x.id})">Hapus</button></td></tr>`).join('')||'<tr><td colspan="5">Belum ada ide.</td></tr>';
 ideaStats.innerHTML=[['TOTAL IDE',ideas.length],['PRIORITAS TINGGI',ideas.filter(x=>x.priority==='Tinggi').length],['SIAP MASUK PIPELINE',ideas.filter(x=>x.priority!=='Rendah').length],['FORMAT TERPOPULER',formatTopIdea()]].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big" style="font-size:${String(x[1]).length>8?'18px':'27px'}">${x[1]}</div></div>`).join('');
 }
 function formatTopIdea(){if(!ideas.length)return '-';let c={};ideas.forEach(x=>c[x.format]=(c[x.format]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]}
-function openIdea(){modalContent.innerHTML=`<h2>Tambah Ide</h2><div class="form"><label>Judul / ide<input id="ititle"></label><label>Format<select id="iformat"><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>Prioritas<select id="ipriority"><option>Tinggi</option><option>Sedang</option><option>Rendah</option></select></label><label>Catatan<textarea id="inotes"></textarea></label><button class="btn primary" onclick="createIdea()">Simpan Ide</button></div>`;modal.classList.add('show')}
+function openIdea(){modalContent.innerHTML=`<h2>Tambah Ide</h2><div class="form"><label>Judul / ide<input id="ititle"></label><label>Format<select id="iformat"><option>Carousel</option><option>Video</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>Prioritas<select id="ipriority"><option>Tinggi</option><option>Sedang</option><option>Rendah</option></select></label><label>Catatan<textarea id="inotes"></textarea></label><button class="btn primary" onclick="createIdea()">Simpan Ide</button></div>`;modal.classList.add('show')}
 async function createIdea(){
   let t=ititle.value.trim(); if(!t)return alert('Judul ide wajib diisi.');
   const item={id:Date.now(),title:t,format:iformat.value,priority:ipriority.value,notes:inotes.value};
@@ -652,192 +690,183 @@ async function promoteIdea(id){
 }
 
 
-function er(x){return x.reach?((x.likes+x.comments+x.shares+x.saves)/x.reach*100):0}
-function fmt(n){return new Intl.NumberFormat('id-ID').format(n)}
+function er(x){
+  const denominator=Number(x.reach||0)>0?Number(x.reach):Number(x.views||0);
+  const interactions=Number(x.likes||0)+Number(x.comments||0)+Number(x.shares||0)+Number(x.saves||0);
+  return denominator?interactions/denominator*100:0;
+}
+function fmt(n){return new Intl.NumberFormat('id-ID').format(Number(n)||0)}
+function platformLabel(p){return p.channel?`${p.platform} · ${p.channel}`:p.platform||'Platform belum dipilih'}
+function platformOptions(selected='Instagram', channel=''){
+  const map={
+    'Instagram':['Feed/Carousel','Reels/Video'],
+    'Facebook':['Post','Video'],
+    'TikTok':['Video'],
+    'YouTube':['Shorts','Video Panjang']
+  };
+  return Object.entries(map).map(([p,chs])=>chs.map(ch=>`<option value="${escAttr(p+'||'+ch)}" ${p===selected&&ch===channel?'selected':''}>${esc(p)} — ${esc(ch)}</option>`).join('')).join('');
+}
 function renderAnalytics(){
-if(!document.getElementById('performanceBody'))return;
-let totalReach=performance.reduce((a,x)=>a+x.reach,0), totalViews=performance.reduce((a,x)=>a+x.views,0), avgER=performance.length?performance.reduce((a,x)=>a+er(x),0)/performance.length:0;
-analyticsCards.innerHTML=[['TOTAL REACH',fmt(totalReach)],['TOTAL VIEWS',fmt(totalViews)],['KONTEN DIANALISIS',performance.length],['AVERAGE ER',avgER.toFixed(2)+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');
-let groups={};performance.forEach(p=>{let c=data.find(x=>x.id===p.contentId);if(!c)return;(groups[c.format]??=[]).push(p)});
-formatAnalytics.innerHTML=Object.entries(groups).map(([f,arr])=>{let r=arr.reduce((a,x)=>a+x.reach,0), e=arr.reduce((a,x)=>a+er(x),0)/arr.length;return `<div class="recapline"><span>${f}<br><span class="muted">${arr.length} konten · reach ${fmt(r)}</span></span><b>${e.toFixed(2)}%</b></div>`}).join('')||'<div class="muted">Belum ada data.</div>';
-let top=[...performance].sort((a,b)=>er(b)-er(a)).slice(0,5);
-topAnalytics.innerHTML=top.map((p,i)=>{let c=data.find(x=>x.id===p.contentId);return `<div class="recapline"><span>${i+1}. <b>${c?c.title:'Konten'}</b><br><span class="muted">${c?c.format:''}</span></span><b>${er(p).toFixed(2)}%</b></div>`}).join('')||'<div class="muted">Belum ada data.</div>';
-performanceBody.innerHTML=performance.map(p=>{let c=data.find(x=>x.id===p.contentId);return `<tr><td><b>${c?c.title:'-'}</b></td><td>${c?c.format:'-'}</td><td>${fmt(p.reach)}</td><td>${fmt(p.views)}</td><td>${fmt(p.likes)}</td><td>${fmt(p.shares)}</td><td>${fmt(p.saves)}</td><td>${er(p).toFixed(2)}%</td><td><button class="btn" onclick="deletePerformance(${p.id})">Hapus</button></td></tr>`}).join('')||'<tr><td colspan="9">Belum ada data.</td></tr>';
+  if(!document.getElementById('performanceBody'))return;
+  const pf=document.getElementById('analyticsPlatform')?.value||'';
+  const cf=document.getElementById('analyticsChannel')?.value||'';
+  const filtered=performance.filter(p=>(!pf||p.platform===pf)&&(!cf||p.channel===cf));
+  const channels=[...new Set(performance.filter(p=>!pf||p.platform===pf).map(p=>p.channel).filter(Boolean))];
+  const channelEl=document.getElementById('analyticsChannel');
+  if(channelEl){
+    const current=channelEl.value;
+    channelEl.innerHTML='<option value="">Semua channel</option>'+channels.map(c=>`<option value="${escAttr(c)}">${esc(c)}</option>`).join('');
+    if(channels.includes(current))channelEl.value=current;
+  }
+  const totalReach=filtered.reduce((a,x)=>a+(+x.reach||0),0);
+  const totalViews=filtered.reduce((a,x)=>a+(+x.views||0),0);
+  const avgER=filtered.length?filtered.reduce((a,x)=>a+er(x),0)/filtered.length:0;
+  analyticsCards.innerHTML=[
+    ['TOTAL REACH',fmt(totalReach)],
+    ['TOTAL VIEWS',fmt(totalViews)],
+    ['DATA PERFORMA',filtered.length],
+    ['AVERAGE ER',avgER.toFixed(2)+'%']
+  ].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');
+
+  const groups={};
+  filtered.forEach(p=>{
+    const key=platformLabel(p);
+    (groups[key]??=[]).push(p);
+  });
+  formatAnalytics.innerHTML=Object.entries(groups).map(([f,arr])=>{
+    const views=arr.reduce((a,x)=>a+(+x.views||0),0);
+    const e=arr.reduce((a,x)=>a+er(x),0)/arr.length;
+    return `<div class="recapline"><span>${esc(f)}<br><span class="muted">${arr.length} data · ${fmt(views)} views</span></span><b>${e.toFixed(2)}%</b></div>`;
+  }).join('')||'<div class="muted">Belum ada data.</div>';
+
+  const top=[...filtered].sort((a,b)=>er(b)-er(a)).slice(0,5);
+  topAnalytics.innerHTML=top.map((p,i)=>{
+    const c=data.find(x=>String(x.id)===String(p.contentId||p.content_id));
+    return `<div class="recapline"><span>${i+1}. <b>${esc(c?.title||'Konten')}</b><br><span class="muted">${esc(platformLabel(p))}</span></span><b>${er(p).toFixed(2)}%</b></div>`;
+  }).join('')||'<div class="muted">Belum ada data.</div>';
+
+  performanceBody.innerHTML=filtered.map(p=>{
+    const cid=p.contentId??p.content_id;
+    const c=data.find(x=>String(x.id)===String(cid));
+    return `<tr>
+      <td><b>${esc(c?.title||'-')}</b></td>
+      <td>${esc(platformLabel(p))}</td>
+      <td>${esc(c?.format||'-')}</td>
+      <td>${fmt(p.reach)}</td>
+      <td>${fmt(p.views)}</td>
+      <td>${fmt(p.likes)}</td>
+      <td>${fmt(p.comments)}</td>
+      <td>${fmt(p.shares)}</td>
+      <td>${fmt(p.saves)}</td>
+      <td>${er(p).toFixed(2)}%</td>
+      <td><button class="btn" onclick="editPerformance(${p.id})">Edit</button> <button class="btn" onclick="deletePerformance(${p.id})">Hapus</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="11">Belum ada data.</td></tr>';
 }
 function openPerformance(){
-let published=data.filter(x=>x.status==='Terbit');
-modalContent.innerHTML=`<h2>Tambah Data Performa</h2><div class="form"><label>Konten<select id="pcontent">${published.map(x=>`<option value="${x.id}">${x.title}</option>`).join('')||'<option value="">Belum ada konten Terbit</option>'}</select></label><label>Reach<input id="preach" type="number" min="0"></label><label>Views<input id="pviews" type="number" min="0"></label><label>Likes<input id="plikes" type="number" min="0"></label><label>Comments<input id="pcomments" type="number" min="0"></label><label>Shares<input id="pshares" type="number" min="0"></label><label>Saves<input id="psaves" type="number" min="0"></label><button class="btn primary" onclick="createPerformance()">Simpan Performa</button></div>`;modal.classList.add('show')
-}
-async function createPerformance(){
-  if(!pcontent.value)return alert('Belum ada konten terbit.');
-  const item={id:Date.now(),contentId:+pcontent.value,reach:+preach.value||0,views:+pviews.value||0,likes:+plikes.value||0,comments:+pcomments.value||0,shares:+pshares.value||0,saves:+psaves.value||0};
-  try{await patchRemotePerformance(item);performance.push(item);save();closeModal();renderAnalytics();}
-  catch(e){alert('Gagal menyimpan performa ke Supabase: '+e.message);}
-}
-async function deletePerformance(id){
-  if(!confirm('Hapus data performa ini?'))return;
-  try{await remoteDelete('performance',id);performance=performance.filter(x=>x.id!==id);save();renderAnalytics();}
-  catch(e){alert('Gagal menghapus performa dari Supabase: '+e.message);}
-}
-function renderWorkflow(){
-if(!document.getElementById('workflowBody')) return;
-let labels=['Riset / sumber','Penulisan / script','Fact check','Desain / produksi','QC akhir','Caption & schedule','Publish'];
-workflowSteps.innerHTML=labels.map((x,i)=>`<div class="recapline"><span>${i+1}. ${x}</span><span class="muted">tahap ${i+1}</span></div>`).join('');
-let active=data.filter(x=>x.status!=='Terbit');
-attention.innerHTML=active.length?active.slice(0,6).map(x=>{
-let pct=Math.round(x.checks.filter(Boolean).length/7*100);
-return `<div class="recapline"><span><b>${x.title}</b><br><span class="muted">${x.status} · ${x.pic}</span></span><b>${pct}%</b></div>`;
-}).join(''):'<div class="muted">Semua konten selesai.</div>';
-workflowBody.innerHTML=data.map(x=>{
-let done=x.checks.filter(Boolean).length,pct=Math.round(done/7*100);
-return `<tr><td><b>${x.title}</b></td><td>${x.status}</td><td>${x.pic}</td><td>${done}/7 (${pct}%)</td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Checklist</button></td></tr>`;
-}).join('');
-}
-
-function renderTeam(){
-  if(!document.getElementById('teamBody'))return;
-
-  teamCards.innerHTML=members.map(m=>{
-    let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
-    let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
-    return `<div class="card">
-      <div class="label">${esc(m.role.toUpperCase())}</div>
-      <div class="big" style="font-size:20px">${esc(m.name)}</div>
-      <div class="muted">${active} aktif · ${done} selesai</div>
-      ${isAdmin() && m.id!==sessionUser?.id ? `<div class="actions" style="margin-top:12px"><button class="btn" onclick="changeMemberRole('${m.id}')">Ubah Role</button><button class="btn" onclick="deleteMember('${m.id}')">Hapus</button></div>` : ''}
-    </div>`;
-  }).join('') || '<div class="muted">Belum ada anggota yang terdaftar di Supabase.</div>';
-
-  let today='2026-09-01';
-  teamBody.innerHTML=members.map(m=>{
-    let active=data.filter(x=>x.pic===m.name&&x.status!=='Terbit').length;
-    let done=data.filter(x=>x.pic===m.name&&x.status==='Terbit').length;
-    let overdue=data.filter(x=>x.pic===m.name&&x.status!=='Terbit'&&x.deadline<today).length;
-    let action=isAdmin() && m.id!==sessionUser?.id
-      ? `<div class="actions"><button class="btn" style="padding:5px 8px" onclick="changeMemberRole('${m.id}')">Role</button><button class="btn" style="padding:5px 8px" onclick="deleteMember('${m.id}')">Hapus</button></div>`
-      : '<span class="muted">—</span>';
-    return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${active}</td><td>${done}</td><td>${overdue}</td><td>${action}</td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="muted">Belum ada anggota yang terdaftar.</td></tr>';
-}
-
-function openMember(){
-  if(!isAdmin()) return alert('Hanya Admin yang dapat mengelola anggota.');
-  modalContent.innerHTML=`<h2>Tambah / Kelola Anggota</h2>
-  <div class="permission-note">Akun login dibuat di <b>Supabase Authentication</b>. Setelah akun dibuat, profilnya harus tersedia di tabel <b>profiles</b>; tombol Refresh Anggota akan mengambil data terbaru.</div>
+  const published=data.filter(x=>x.status==='Terbit');
+  modalContent.innerHTML=`<h2>Tambah Data Performa</h2>
   <div class="form">
-    <p class="muted">Untuk keamanan, versi browser tidak membuat akun Authentication secara langsung karena membutuhkan service role key. Jangan pernah menaruh service role key di HTML.</p>
-    <button class="btn primary" onclick="refreshMembers();closeModal()">Refresh Daftar Anggota</button>
+    <label>Konten<select id="pcontent">${published.map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('')||'<option value="">Belum ada konten Terbit</option>'}</select></label>
+    <label>Platform & Channel<select id="pplatform" onchange="updateMetricHelp()">${platformOptions('Instagram','Feed/Carousel')}</select></label>
+    <div class="metric-note" id="metricHelp">Instagram — Feed/Carousel. Isi angka yang tersedia dari platform.</div>
+    <label>Tanggal Publikasi<input id="ppublished" type="date"></label>
+    <label>Reach<input id="preach" type="number" min="0" value="0"></label>
+    <label>Views / Tayangan<input id="pviews" type="number" min="0" value="0"></label>
+    <label>Likes<input id="plikes" type="number" min="0" value="0"></label>
+    <label>Comments<input id="pcomments" type="number" min="0" value="0"></label>
+    <label>Shares<input id="pshares" type="number" min="0" value="0"></label>
+    <label>Saves<input id="psaves" type="number" min="0" value="0"></label>
+    <label>Watch Time (menit, opsional)<input id="pwatch" type="number" min="0" step="0.01" value="0"></label>
+    <label>Rata-rata Durasi Ditonton (detik, opsional)<input id="pavgdur" type="number" min="0" step="0.01" value="0"></label>
+    <button class="btn primary" onclick="createPerformance()">Simpan Performa</button>
   </div>`;
   modal.classList.add('show');
 }
-
-async function refreshMembers(){
-  if(!remoteReady || !supabaseClient)return;
-  const {data:rows,error}=await supabaseClient.from('profiles').select('id,name,role').order('name');
-  if(error)return alert('Gagal memuat anggota: '+error.message);
-  members=(rows||[]).map(x=>({id:x.id,name:x.name||'Tanpa nama',role:x.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE}));
-  renderTeam();
+function updateMetricHelp(){
+  const v=(document.getElementById('pplatform')?.value||'').split('||');
+  const p=v[0]||'Instagram',c=v[1]||'';
+  const el=document.getElementById('metricHelp');
+  if(el)el.textContent=`${p} — ${c}. Reach tidak selalu tersedia; jika kosong, ER dihitung berdasarkan views.`;
 }
-
-async function changeMemberRole(id){
-  if(!isAdmin())return alert('Hanya Admin yang dapat mengubah role.');
-  if(id===sessionUser?.id)return alert('Role Admin akun yang sedang digunakan tidak diubah dari sini.');
-  const member=members.find(m=>m.id===id); if(!member)return;
-  const next=prompt(`Role untuk ${member.name}:`,member.role);
-  if(next===null)return;
-  const role=next.trim()==='Admin'?ADMIN_ROLE:next.trim()==='Member'?MEMBER_ROLE:null;
-  if(!role)return alert('Role hanya boleh Admin atau Member.');
+async function createPerformance(){
+  if(!pcontent.value)return alert('Belum ada konten terbit.');
+  const parts=pplatform.value.split('||');
+  const item={
+    id:Date.now(),
+    contentId:+pcontent.value,
+    platform:parts[0]||'Instagram',
+    channel:parts[1]||'',
+    publishedAt:ppublished.value||null,
+    reach:+preach.value||0,
+    views:+pviews.value||0,
+    likes:+plikes.value||0,
+    comments:+pcomments.value||0,
+    shares:+pshares.value||0,
+    saves:+psaves.value||0,
+    watchTimeMinutes:+pwatch.value||0,
+    avgViewDurationSeconds:+pavgdur.value||0
+  };
   try{
-    await remoteUpsert('profiles',{id,name:member.name,role});
-    member.role=role;renderTeam();
-  }catch(e){alert('Gagal mengubah role di Supabase: '+e.message);}
+    await patchRemotePerformance(item);
+    const c=data.find(x=>String(x.id)===String(item.contentId));
+    await writeActivity('CREATE','performance',item.id,{title:c?.title||'Konten',platform:platformLabel(item)});
+    closeModal();await refreshRemote();alert('✓ Data performa tersimpan');
+  }catch(e){alert('⚠ Gagal menyimpan performa: '+e.message)}
+}
+function editPerformance(id){
+  const x=performance.find(a=>String(a.id)===String(id));if(!x)return;
+  const platform=x.platform||'Instagram',channel=x.channel||'';
+  modalContent.innerHTML=`<h2>Edit Data Performa</h2><div class="form">
+    <label>Platform & Channel<select id="eplatform">${platformOptions(platform,channel)}</select></label>
+    <label>Tanggal Publikasi<input id="epublished" type="date" value="${escAttr(x.publishedAt||x.published_at||'')}"></label>
+    <label>Reach<input id="ereach" type="number" min="0" value="${x.reach||0}"></label>
+    <label>Views / Tayangan<input id="eviews" type="number" min="0" value="${x.views||0}"></label>
+    <label>Likes<input id="elikes" type="number" min="0" value="${x.likes||0}"></label>
+    <label>Comments<input id="ecomments" type="number" min="0" value="${x.comments||0}"></label>
+    <label>Shares<input id="eshares" type="number" min="0" value="${x.shares||0}"></label>
+    <label>Saves<input id="esaves" type="number" min="0" value="${x.saves||0}"></label>
+    <label>Watch Time (menit)<input id="ewatch" type="number" min="0" step="0.01" value="${x.watchTimeMinutes??x.watch_time_minutes??0}"></label>
+    <label>Rata-rata Durasi Ditonton (detik)<input id="eavgdur" type="number" min="0" step="0.01" value="${x.avgViewDurationSeconds??x.avg_view_duration_seconds??0}"></label>
+    <button class="btn primary" onclick="updatePerformance(${id})">Simpan Perubahan</button></div>`;
+  modal.classList.add('show');
+}
+async function updatePerformance(id){
+  const x=performance.find(a=>String(a.id)===String(id));if(!x)return;
+  const parts=eplatform.value.split('||');
+  const next={...x,
+    contentId:x.contentId??x.content_id,
+    platform:parts[0]||'Instagram',
+    channel:parts[1]||'',
+    publishedAt:epublished.value||null,
+    reach:+ereach.value||0,views:+eviews.value||0,likes:+elikes.value||0,
+    comments:+ecomments.value||0,shares:+eshares.value||0,saves:+esaves.value||0,
+    watchTimeMinutes:+ewatch.value||0,avgViewDurationSeconds:+eavgdur.value||0
+  };
+  try{
+    await patchRemotePerformance(next);
+    const c=data.find(a=>String(a.id)===String(next.contentId));
+    await writeActivity('UPDATE','performance',id,{title:c?.title||'Konten',platform:platformLabel(next)});
+    closeModal();await refreshRemote();alert('✓ Data performa tersimpan');
+  }catch(e){alert('⚠ Gagal menyimpan performa: '+e.message)}
+}
+async function deletePerformance(id){
+  const x=performance.find(a=>String(a.id)===String(id));if(!x||!confirm('Hapus data performa ini?'))return;
+  try{
+    await remoteDelete('performance',id);
+    const c=data.find(a=>String(a.id)===String(x.contentId??x.content_id));
+    await writeActivity('DELETE','performance',id,{title:c?.title||'Konten',platform:platformLabel(x)});
+    await refreshRemote();alert('✓ Data performa berhasil dihapus');
+  }catch(e){alert('⚠ Gagal menghapus: '+e.message)}
 }
 
-async function deleteMember(id){
-  if(!isAdmin()) return alert('Hanya Admin yang dapat menghapus anggota.');
-  if(!id || id===sessionUser?.id) return alert('Admin tidak dapat menghapus akun yang sedang digunakan.');
-  const member=members.find(m=>m.id===id);
-  if(!member) return alert('Anggota tidak ditemukan.');
-  if(!confirm(`Hapus profil "${member.name}" dari Team Workspace?\n\nIni menghapus profil dari tabel profiles, tetapi tidak menghapus akun Authentication.`))return;
-  try{
-    await remoteDelete('profiles',id);
-    members=members.filter(m=>m.id!==id);
-    renderTeam();
-    alert('Profil anggota berhasil dihapus dari Supabase. Akun Authentication tetap ada.');
-  }catch(e){alert('Gagal menghapus anggota dari Supabase: '+e.message+'\n\nJika error menyebut RLS/policy, jalankan SQL patch V9.3 yang disediakan bersama file ini.');}
-}
-async function changeMonthlyTarget(){
-  if(!isAdmin()) return alert('Hanya Admin yang dapat mengubah target bulanan.');
-  const value=prompt('Target konten bulan ini:', String(MONTHLY_TARGET));
-  if(value===null) return;
-  const n=Number(value);
-  if(!Number.isInteger(n) || n<1 || n>10000)return alert('Masukkan angka bulat antara 1 dan 10000.');
-  try{
-    await remoteUpsert('workspace_settings',{id:workspaceSettingsId||1,monthly_target:n});
-    MONTHLY_TARGET=n;cacheLocal();renderMonthly();renderRecap();
-    alert('Target berhasil disimpan ke Supabase.');
-  }catch(e){alert('Target TIDAK diubah karena gagal disimpan ke Supabase: '+e.message);}
-}
-
-function renderMonthly(){
-if(!document.getElementById('monthlyCards'))return;
-let total=data.length,pub=data.filter(x=>x.status==='Terbit').length,target=MONTHLY_TARGET,completion=Math.round(pub/target*100);
-let avgER=performance.length?performance.reduce((a,x)=>a+er(x),0)/performance.length:0;
-monthlyCards.innerHTML=[['TOTAL KONTEN',total],['TERBIT',pub],['TARGET',target],['ACHIEVEMENT',completion+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');
-let delayed=data.filter(x=>x.status!=='Terbit'&&x.deadline<'2026-09-01').length;
-monthlyProduction.innerHTML=`<div class="recapline"><span>Konten selesai</span><b>${pub}</b></div><div class="recapline"><span>Masih diproses</span><b>${data.filter(x=>x.status!=='Terbit').length}</b></div><div class="recapline"><span>Belum mulai</span><b>${data.filter(x=>x.status==='Perencanaan').length}</b></div><div class="recapline"><span>Terlambat</span><b>${delayed}</b></div>`;
-monthlyPerformance.innerHTML=`<div class="recapline"><span>Konten dianalisis</span><b>${performance.length}</b></div><div class="recapline"><span>Average ER</span><b>${avgER.toFixed(2)}%</b></div><div class="recapline"><span>Total reach</span><b>${fmt(performance.reduce((a,x)=>a+x.reach,0))}</b></div>`;
-let best=performance.length?[...performance].sort((a,b)=>er(b)-er(a))[0]:null,c=best?data.find(x=>x.id===best.contentId):null;
-monthlyNotes.innerHTML=best?`Top content berdasarkan ER: <b>${c?c.title:'-'}</b> (${er(best).toFixed(2)}%). Bulan berikutnya, evaluasi format dan topik konten ini untuk direplikasi.`:'Belum cukup data performa untuk membuat rekomendasi.';
-}
-function renderStats(){let total=data.length,pub=data.filter(x=>x.status==='Terbit').length,processing=data.filter(x=>!['Terbit','Perencanaan'].includes(x.status)).length,plan=data.filter(x=>x.status==='Perencanaan').length;document.getElementById('stats').innerHTML=[['TOTAL KONTEN',total,100],['TERBIT',pub,total?pub/total*100:0],['SEDANG DIPROSES',processing,total?processing/total*100:0],['PERENCANAAN',plan,total?plan/total*100:0]].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div><div class="bar"><i style="width:${x[2]}%"></i></div></div>`).join('')}
-function renderBoard(){document.getElementById('board').innerHTML=statuses.map(s=>`<div class="col" data-status="${s}" ondragover="allow(event)" ondrop="drop(event,'${s}')" ondragleave="leave(event)"><div class="colhead">${s}<span class="count">${data.filter(x=>x.status===s).length}</span></div>${data.filter(x=>x.status===s).map(x=>`<div class="item" draggable="true" ondragstart="drag(event,${x.id})" onclick="detail(${x.id})"><b>${x.title}</b><div class="meta">${x.format} · ${x.pic}<br>Deadline: ${x.deadline.slice(8,10)}/${x.deadline.slice(5,7)}</div><span class="tag">${x.checks.filter(Boolean).length}/7 checklist</span></div>`).join('')||'<div class="empty">Belum ada konten</div>'}</div>`).join('')}
-function drag(e,id){e.dataTransfer.setData('id',id)} function allow(e){e.preventDefault();e.currentTarget.classList.add('drag')} function leave(e){e.currentTarget.classList.remove('drag')} async function drop(e,status){
-  e.preventDefault();let id=+e.dataTransfer.getData('id'),x=data.find(a=>a.id===id);
-  if(x && x.status!==status){const old=x.status;x.status=status;
-    try{await patchRemoteContent(x);save();render();}
-    catch(err){x.status=old;alert('Status tidak berubah karena gagal disimpan ke Supabase: '+err.message);}
-  }
-  e.currentTarget.classList.remove('drag');
-}
-function populateFilters(){filterStatus.innerHTML='<option value="">Semua status</option>'+statuses.map(x=>`<option>${x}</option>`).join('');let pics=[...new Set(data.map(x=>x.pic))];filterPIC.innerHTML='<option value="">Semua PIC</option>'+pics.map(x=>`<option>${x}</option>`).join('')}
-function renderTable(){if(!tbody)return;let q=(search?.value||'').toLowerCase(),s=filterStatus?.value||'',f=filterFormat?.value||'',p=filterPIC?.value||'';let rows=data.filter(x=>(!q||x.title.toLowerCase().includes(q))&&(!s||x.status===s)&&(!f||x.format===f)&&(!p||x.pic===p));tbody.innerHTML=rows.map(x=>`<tr><td><b>${x.title}</b></td><td>${x.format}</td><td>${x.pic}</td><td><span class="status">${x.status}</span></td><td>${x.deadline}</td><td><button class="btn" onclick="detail(${x.id})">Detail</button></td></tr>`).join('')||'<tr><td colspan="6">Tidak ada data.</td></tr>'}
-function detail(id){let x=data.find(a=>a.id===id);modalContent.innerHTML=`<h2 style="margin:0 0 5px">${x.title}</h2><div class="muted">${x.format} · ${x.pic} · ${x.status}</div><hr><p><b>Deadline:</b> ${x.deadline}</p><p>${x.notes||'Tidak ada catatan.'}</p><p><b>Progres:</b> ${x.checks.filter(Boolean).length}/7 tahap selesai</p><h4>Checklist Produksi</h4><div class="checks">${['Riset / sumber','Penulisan / script','Fact check','Desain / produksi','QC akhir','Caption & schedule','Publish'].map((c,i)=>`<label><input type="checkbox" ${x.checks[i]?'checked':''} onchange="toggleCheck(${id},${i},this.checked)"> ${c}</label>`).join('')}</div><div class="actions" style="margin-top:18px"><button class="btn" onclick="editContent(${id})">Edit</button><button class="btn" onclick="removeContent(${id})">Hapus</button></div>`;modal.classList.add('show')}
-async function toggleCheck(id,i,v){
-  let x=data.find(a=>a.id===id);if(!x)return;const old=x.checks[i];x.checks[i]=v?1:0;
-  try{await patchRemoteContent(x);save();renderBoard();}
-  catch(e){x.checks[i]=old;alert('Checklist tidak tersimpan ke Supabase: '+e.message);renderBoard();}
-}
-function openAdd(){modalContent.innerHTML=`<h2>Tambah Konten</h2><div class="form"><label>Judul<input id="ftitle"></label><label>Format<select id="fformat"><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>PIC<input id="fpic" placeholder="Nama PIC"></label><label>Status<select id="fstatus">${statuses.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Deadline<input id="fdeadline" type="date"></label><label>Catatan<textarea id="fnotes"></textarea></label><button class="btn primary" onclick="createContent()">Simpan Konten</button></div>`;modal.classList.add('show')}
-async function createContent(){
-  let t=ftitle.value.trim();if(!t)return alert('Judul wajib diisi.');
-  const item={id:Date.now(),title:t,format:fformat.value,pic:fpic.value||'Belum ditentukan',status:fstatus.value,deadline:fdeadline.value||'2026-09-30',notes:fnotes.value,checks:[0,0,0,0,0,0,0]};
-  try{await patchRemoteContent(item);data.push(item);save();closeModal();render();}
-  catch(e){alert('Konten TIDAK disimpan karena gagal ke Supabase: '+e.message);}
-}
-function editContent(id){let x=data.find(a=>a.id===id);modalContent.innerHTML=`<h2>Edit Konten</h2><div class="form"><label>Judul<input id="etitle" value="${esc(x.title)}"></label><label>Format<select id="eformat">${['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>PIC<input id="epic" value="${esc(x.pic)}"></label><label>Status<select id="estatus">${statuses.map(v=>`<option ${v===x.status?'selected':''}>${v}</option>`).join('')}</select></label><label>Deadline<input id="edeadline" type="date" value="${x.deadline}"></label><label>Catatan<textarea id="enotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateContent(${id})">Simpan Perubahan</button></div>`}
-async function updateContent(id){
-  let x=data.find(a=>a.id===id);if(!x)return;const old={...x};
-  x.title=etitle.value.trim();x.format=eformat.value;x.pic=epic.value||'Belum ditentukan';x.status=estatus.value;x.deadline=edeadline.value;x.notes=enotes.value;
-  try{await patchRemoteContent(x);save();closeModal();render();}
-  catch(e){Object.assign(x,old);alert('Perubahan TIDAK disimpan ke Supabase: '+e.message);}
-}
-async function removeContent(id){
-  if(!confirm('Hapus konten ini?'))return;
-  try{await remoteDelete('contents',id);data=data.filter(x=>x.id!==id);save();closeModal();render();}
-  catch(e){alert('Konten TIDAK dihapus karena gagal dihapus dari Supabase: '+e.message);}
-}
-function closeModal(){modal.classList.remove('show')}
-function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')}
-function renderCalendar(){let first=new Date(2026,8,1),days=new Date(2026,9,0).getDate(),start=first.getDay();start=(start+6)%7;let out=['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d=>`<div class="day" style="min-height:30px;background:#eceef1;border:0"><b>${d}</b></div>`).join('');for(let i=0;i<start;i++)out+='<div class="day" style="opacity:0"></div>';for(let d=1;d<=days;d++){let ev=data.filter(x=>+x.deadline.slice(8,10)===d);out+=`<div class="day"><strong>${d}</strong>${ev.map(x=>`<div class="event" title="${x.title}">${x.title}</div>`).join('')}</div>`}calendarGrid.innerHTML=out}
-function renderRecap(){let total=data.length,pub=data.filter(x=>x.status==='Terbit').length;recapCards.innerHTML=[['KONTEN',total],['TERBIT',pub],['TARGET',MONTHLY_TARGET],['ACHIEVEMENT',Math.round(pub/MONTHLY_TARGET*100)+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');statusRecap.innerHTML=statuses.map(s=>`<div class="recapline"><span>${s}</span><b>${data.filter(x=>x.status===s).length}</b></div>`).join('');let fs=['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'];formatRecap.innerHTML=fs.map(s=>`<div class="recapline"><span>${s}</span><b>${data.filter(x=>x.format===s).length}</b></div>`).join('')}
 function exportData(){let blob=new Blob([JSON.stringify({contents:data,ideas,performance},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kronieka-content-data.json';a.click();URL.revokeObjectURL(a.href)}
 render();
 </script>
 
 
 <script>
-/* KRONIEKA V10.1 FINAL — Supabase-first, UUID assignments, human Activity Log, responsive hardening. */
+/* KRONIEKA V10.3 FINAL — stable invitation onboarding, multi-platform analytics, video format, Supabase-first. */
 const V101_FUNCTIONS_BASE = 'https://auohuclvwhrayvuofxyy.supabase.co/functions/v1'; // Optional: e.g. https://PROJECT.supabase.co/functions/v1
 let activityLogs=[];
 let connectionState='connecting';
@@ -872,7 +901,7 @@ async function refreshRemote(){
     ]);
     const err=[c,i,p,tm,ws].find(r=>r.error); if(err)throw err.error;
     data=(c.data||[]).map(normalizeContent);
-    ideas=i.data||[];
+    ideas=(i.data||[]).map(x=>({...x,format:x.format==='Reels'?'Video':x.format}));
     performance=(p.data||[]).map(x=>({...x,contentId:x.contentId??x.content_id}));
     members=(tm.data||[]).map(x=>({id:x.id,name:x.name||'Tanpa nama',role:x.role===ADMIN_ROLE?ADMIN_ROLE:MEMBER_ROLE,email:x.email||'',status:x.status||'Aktif',joined_at:x.joined_at||null}));
     if(ws.data?.monthly_target) {workspaceSettingsId=ws.data.id||1;MONTHLY_TARGET=Number(ws.data.monthly_target)}
@@ -903,7 +932,8 @@ function humanActivity(r){
     else if(r.action==='CHECKLIST')text=`memperbarui checklist “${d.title||'konten'}”`;
     else text=`memperbarui konten “${d.title||'Tanpa judul'}”`;
   } else if(r.entity_type==='idea') text=r.action==='DELETE'?`menghapus ide “${d.title||'Tanpa judul'}”`:r.action==='PROMOTE'?`memasukkan ide “${d.title||'Tanpa judul'}” ke Content`:r.action==='UPDATE'?`mengubah ide “${d.title||'Tanpa judul'}”`:`menambahkan ide “${d.title||'Tanpa judul'}”`;
-  else if(r.entity_type==='performance') text=r.action==='DELETE'?`menghapus data performa “${d.title||'konten'}”`:`memperbarui data performa “${d.title||'konten'}”`;
+  else if(r.entity_type==='performance') text=r.action==='DELETE'?`menghapus data performa “${d.title||'konten'}”${d.platform?' di '+d.platform:''}`:`${r.action==='CREATE'?'menambahkan':'memperbarui'} data performa “${d.title||'konten'}”${d.platform?' di '+d.platform:''}`;
+  else if(r.entity_type==='content' && r.action==='PLATFORM') text=`mengubah platform publikasi konten “${d.title||'konten'}” menjadi ${Array.isArray(d.platforms)?d.platforms.join(', '):'belum ditentukan'}`;
   else if(r.entity_type==='team') text=r.action==='INVITE'?`mengundang ${d.name||'anggota baru'} sebagai ${d.role||'Member'}`:r.action==='DELETE'?`menghapus anggota ${d.name||''}`:r.action==='ROLE'?`mengubah role ${d.name||''} menjadi ${d.role||''}`:text;
   else if(r.entity_type==='settings') text=`mengubah target bulanan ${d.from??'-'} → ${d.to??'-'} konten`;
   return `<b>${esc(who)}</b> ${esc(text)}`;
@@ -922,7 +952,7 @@ function picName(x){return memberName(x.content_pic)||x.pic||'Belum ditentukan'}
 function designerName(x){return memberName(x.designer)}
 
 async function patchRemoteContent(x){
-  const row={id:x.id,title:x.title,format:x.format,content_pic:x.content_pic||null,designer:x.designer||null,status:x.status,deadline:x.deadline||null,notes:x.notes||'',checks:x.checks||[0,0,0,0,0,0,0]};
+  const row={id:x.id,title:x.title,format:x.format==='Reels'?'Video':x.format,content_pic:x.content_pic||null,designer:x.designer||null,status:x.status,deadline:x.deadline||null,notes:x.notes||'',platforms:Array.isArray(x.platforms)?x.platforms:[],checks:x.checks||[0,0,0,0,0,0,0]};
   await remoteUpsert('contents',row);
 }
 function populateFilters(){
@@ -933,9 +963,9 @@ function populateFilters(){
   if(filterDesigner)filterDesigner.innerHTML='<option value="">Semua Designer</option>'+opts;
 }
 function renderTable(){
-  if(!tbody)return;let q=(search?.value||'').toLowerCase(),s=filterStatus?.value||'',f=filterFormat?.value||'',p=filterPIC?.value||'',d=filterDesigner?.value||'';
-  let rows=data.filter(x=>(!q||String(x.title||'').toLowerCase().includes(q))&&(!s||x.status===s)&&(!f||x.format===f)&&(!p||String(x.content_pic||x.pic||'')===String(p))&&(!d||String(x.designer||'')===String(d)));
-  tbody.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.title)}</b></td><td>${esc(x.format)}</td><td>${esc(picName(x))}</td><td>${esc(designerName(x))}</td><td><span class="status">${esc(x.status)}</span></td><td>${esc(x.deadline||'-')}</td><td><button class="btn" onclick="detail(${x.id})">Detail</button></td></tr>`).join('')||'<tr><td colspan="7">Tidak ada data.</td></tr>';
+  if(!tbody)return;let q=(search?.value||'').toLowerCase(),s=filterStatus?.value||'',f=filterFormat?.value||'',pf=filterPlatform?.value||'',p=filterPIC?.value||'',d=filterDesigner?.value||'';
+  let rows=data.filter(x=>(!q||String(x.title||'').toLowerCase().includes(q))&&(!s||x.status===s)&&(!f||x.format===f)&&(!pf||(x.platforms||[]).includes(pf))&&(!p||String(x.content_pic||x.pic||'')===String(p))&&(!d||String(x.designer||'')===String(d)));
+  tbody.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.title)}</b></td><td>${esc(x.format)}</td><td>${(x.platforms||[]).map(p=>`<span class="platform-chip">${esc(p)}</span>`).join('')||'-'}</td><td>${esc(picName(x))}</td><td>${esc(designerName(x))}</td><td><span class="status">${esc(x.status)}</span></td><td>${esc(x.deadline||'-')}</td><td><button class="btn" onclick="detail(${x.id})">Detail</button></td></tr>`).join('')||'<tr><td colspan="8">Tidak ada data.</td></tr>';
 }
 function renderBoard(){
   document.getElementById('board').innerHTML=statuses.map(s=>`<div class="col" data-status="${s}" ondragover="allow(event)" ondrop="drop(event,'${s}')" ondragleave="leave(event)"><div class="colhead">${s}<span class="count">${data.filter(x=>x.status===s).length}</span></div>${data.filter(x=>x.status===s).map(x=>`<div class="item" draggable="true" ondragstart="drag(event,${x.id})" onclick="detail(${x.id})"><b>${esc(x.title)}</b><div class="meta">${esc(x.format)} · PIC: ${esc(picName(x))}<br>Designer: ${esc(designerName(x))}<br>Deadline: ${esc((x.deadline||'').slice(8,10))}/${esc((x.deadline||'').slice(5,7))}</div><span class="tag">${x.checks.filter(Boolean).length}/7 checklist</span></div>`).join('')||'<div class="empty">Belum ada konten</div>'}</div>`).join('')}
@@ -945,10 +975,38 @@ function detail(id){const x=data.find(a=>a.id===id);if(!x)return;modalContent.in
 async function toggleCheck(id,i,v){let x=data.find(a=>a.id===id);if(!x)return;const old=x.checks[i];const next={...x,checks:[...x.checks]};next.checks[i]=v?1:0;try{await patchRemoteContent(next);await writeActivity('CHECKLIST','content',id,{title:x.title,step:i+1,checked:!!v});await refreshRemote();detail(id)}catch(e){x.checks[i]=old;alert('Checklist tidak tersimpan ke Supabase: '+e.message)}}
 function openAdd(){
   const opts=members.map(m=>`<option value="${escAttr(m.id)}">${esc(m.name)}</option>`).join('');
-  modalContent.innerHTML=`<h2>Tambah Konten</h2><div class="form"><label>Judul<input id="ftitle"></label><label>Format<select id="fformat"><option>Carousel</option><option>Reels</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label><label>Content PIC<input value="${escAttr(sessionUser?sessionUser.id:'')}" hidden><div class="permission-note">${esc(currentName||'Akun saya')} (otomatis menjadi Content PIC)</div></label><label>Designer<select id="fdesigner"><option value="">Belum ditentukan</option>${opts}</select></label><label>Status<select id="fstatus">${statuses.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Deadline<input id="fdeadline" type="date"></label><label>Catatan<textarea id="fnotes"></textarea></label><button class="btn primary" onclick="createContent()">Simpan Konten</button></div>`;modal.classList.add('show')}
-async function createContent(){let t=ftitle.value.trim();if(!t)return alert('Judul wajib diisi.');const item={id:Date.now(),title:t,format:fformat.value,content_pic:sessionUser?.id||null,designer:fdesigner.value||null,status:fstatus.value,deadline:fdeadline.value||null,notes:fnotes.value,checks:[0,0,0,0,0,0,0]};try{await patchRemoteContent(item);await writeActivity('CREATE','content',item.id,{title:item.title});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
-function editContent(id){const x=data.find(a=>a.id===id);const opts=members.map(m=>`<option value="${escAttr(m.id)}" ${String(m.id)===String(x.designer)?'selected':''}>${esc(m.name)}</option>`).join('');modalContent.innerHTML=`<h2>Edit Konten</h2><div class="form"><label>Judul<input id="etitle" value="${escAttr(x.title)}"></label><label>Format<select id="eformat">${['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>Content PIC<select id="epic">${members.map(m=>`<option value="${escAttr(m.id)}" ${String(m.id)===String(x.content_pic||x.pic)?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label><label>Designer<select id="edesigner"><option value="">Belum ditentukan</option>${opts}</select></label><label>Status<select id="estatus">${statuses.map(v=>`<option ${v===x.status?'selected':''}>${v}</option>`).join('')}</select></label><label>Deadline<input id="edeadline" type="date" value="${escAttr(x.deadline||'')}"></label><label>Catatan<textarea id="enotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateContent(${id})">Simpan Perubahan</button></div>`;modal.classList.add('show')}
-async function updateContent(id){const x=data.find(a=>a.id===id);if(!x)return;const old={...x};const next={...x,title:etitle.value.trim(),format:eformat.value,content_pic:epic.value||null,designer:edesigner.value||null,status:estatus.value,deadline:edeadline.value||null,notes:enotes.value};if(!next.title)return alert('Judul wajib diisi.');try{await patchRemoteContent(next);if(old.status!==next.status)await writeActivity('STATUS','content',id,{title:next.title,from:old.status,to:next.status});if(String(old.designer||'')!==String(next.designer||''))await writeActivity('DESIGNER','content',id,{title:next.title,designer:memberName(next.designer)});if(String(old.content_pic||'')!==String(next.content_pic||''))await writeActivity('UPDATE','content',id,{title:next.title});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
+  const platformChecks=['Instagram','Facebook','TikTok','YouTube Shorts','YouTube Video'].map(v=>`<label><input type="checkbox" name="cplatform" value="${escAttr(v)}"> ${esc(v)}</label>`).join('');
+  modalContent.innerHTML=`<h2>Tambah Konten</h2><div class="form">
+  <label>Judul<input id="ftitle"></label>
+  <label>Format<select id="fformat"><option>Carousel</option><option>Video</option><option>Today's Tale</option><option>Postingan Hari Raya</option></select></label>
+  <label>Platform Publikasi<div class="checks">${platformChecks}</div><div class="muted">Pilih semua platform tempat konten ini direncanakan untuk dipublikasikan.</div></label>
+  <label>Content PIC<div class="permission-note">${esc(currentName||'Akun saya')} (otomatis menjadi Content PIC)</div></label>
+  <label>Designer<select id="fdesigner"><option value="">Belum ditentukan</option>${opts}</select></label>
+  <label>Status<select id="fstatus">${statuses.map(x=>`<option>${x}</option>`).join('')}</select></label>
+  <label>Deadline<input id="fdeadline" type="date"></label>
+  <label>Catatan<textarea id="fnotes"></textarea></label>
+  <button class="btn primary" onclick="createContent()">Simpan Konten</button></div>`;
+  modal.classList.add('show')
+}
+async function createContent(){let t=ftitle.value.trim();if(!t)return alert('Judul wajib diisi.');const platforms=[...document.querySelectorAll('input[name="cplatform"]:checked')].map(x=>x.value);const item={id:Date.now(),title:t,format:fformat.value,content_pic:sessionUser?.id||null,designer:fdesigner.value||null,status:fstatus.value,deadline:fdeadline.value||null,notes:fnotes.value,platforms,checks:[0,0,0,0,0,0,0]};try{await patchRemoteContent(item);await writeActivity('CREATE','content',item.id,{title:item.title,platforms});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
+function editContent(id){
+  const x=data.find(a=>a.id===id);if(!x)return;
+  const opts=members.map(m=>`<option value="${escAttr(m.id)}" ${String(m.id)===String(x.designer)?'selected':''}>${esc(m.name)}</option>`).join('');
+  const selected=Array.isArray(x.platforms)?x.platforms:[];
+  const platformChecks=['Instagram','Facebook','TikTok','YouTube Shorts','YouTube Video'].map(v=>`<label><input type="checkbox" name="eplatform" value="${escAttr(v)}" ${selected.includes(v)?'checked':''}> ${esc(v)}</label>`).join('');
+  modalContent.innerHTML=`<h2>Edit Konten</h2><div class="form">
+  <label>Judul<input id="etitle" value="${escAttr(x.title)}"></label>
+  <label>Format<select id="eformat">${['Carousel','Video',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label>
+  <label>Platform Publikasi<div class="checks">${platformChecks}</div></label>
+  <label>Content PIC<select id="epic">${members.map(m=>`<option value="${escAttr(m.id)}" ${String(m.id)===String(x.content_pic||x.pic)?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+  <label>Designer<select id="edesigner"><option value="">Belum ditentukan</option>${opts}</select></label>
+  <label>Status<select id="estatus">${statuses.map(v=>`<option ${v===x.status?'selected':''}>${v}</option>`).join('')}</select></label>
+  <label>Deadline<input id="edeadline" type="date" value="${escAttr(x.deadline||'')}"></label>
+  <label>Catatan<textarea id="enotes">${esc(x.notes||'')}</textarea></label>
+  <button class="btn primary" onclick="updateContent(${id})">Simpan Perubahan</button></div>`;
+  modal.classList.add('show')
+}
+async function updateContent(id){const x=data.find(a=>a.id===id);if(!x)return;const old={...x};const next={...x,title:etitle.value.trim(),format:eformat.value,content_pic:epic.value||null,designer:edesigner.value||null,status:estatus.value,deadline:edeadline.value||null,notes:enotes.value,platforms:[...document.querySelectorAll('input[name="eplatform"]:checked')].map(x=>x.value)};if(!next.title)return alert('Judul wajib diisi.');try{await patchRemoteContent(next);if(old.status!==next.status)await writeActivity('STATUS','content',id,{title:next.title,from:old.status,to:next.status});if(String(old.designer||'')!==String(next.designer||''))await writeActivity('DESIGNER','content',id,{title:next.title,designer:memberName(next.designer)});if(String(old.content_pic||'')!==String(next.content_pic||''))await writeActivity('UPDATE','content',id,{title:next.title});if(JSON.stringify(old.platforms||[])!==JSON.stringify(next.platforms||[]))await writeActivity('PLATFORM','content',id,{title:next.title,platforms:next.platforms});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
 async function removeContent(id){const x=data.find(a=>a.id===id);if(!x||!confirm(`Hapus “${x.title}”?\n\nData akan dihapus dari database.`))return;try{await remoteDelete('contents',id);await writeActivity('DELETE','content',id,{title:x.title});closeModal();await refreshRemote();alert('✓ Berhasil dihapus')}catch(e){alert('⚠ Gagal menghapus: '+e.message)}}
 
 function renderTeam(){
@@ -966,6 +1024,9 @@ async function inviteMember(){
   const btn=document.querySelector('#modalContent .btn.primary');
   const done=withBusy(btn,'Mengirim...');
   try{
+    const {data:existing,error:existingError}=await supabaseClient.from('profiles').select('id,name,email').ilike('email',email).maybeSingle();
+    if(existingError)throw existingError;
+    if(existing){throw new Error('Email tersebut sudah terdaftar sebagai anggota Kronieka.');}
     const {data:out,error}=await supabaseClient.functions.invoke('invite-member',{
       body:{name,email,role}
     });
@@ -999,8 +1060,8 @@ function overdueCount(){const t=todayISO();return data.filter(x=>x.status!=='Ter
 function weekDeadlineCount(){const d=new Date();const end=new Date(d);end.setDate(d.getDate()+(7-d.getDay()));const e=end.toISOString().slice(0,10);const t=todayISO();return data.filter(x=>x.status!=='Terbit'&&x.deadline&&x.deadline>=t&&x.deadline<=e).length}
 function renderStats(){let total=data.length,pub=data.filter(x=>x.status==='Terbit').length,processing=data.filter(x=>!['Terbit','Perencanaan'].includes(x.status)).length,plan=data.filter(x=>x.status==='Perencanaan').length;document.getElementById('stats').innerHTML=[['TOTAL KONTEN',total,100],['TERBIT',pub,total?pub/total*100:0],['SEDANG DIPROSES',processing,total?processing/total*100:0],['PERENCANAAN',plan,total?plan/total*100:0],['🔴 TERLAMBAT',overdueCount(),0],['🟠 DEADLINE MINGGU INI',weekDeadlineCount(),0]].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div>${x[2]?`<div class="bar"><i style="width:${x[2]}%"></i></div>`:''}</div>`).join('')}
 
-function renderIdeas(){if(!document.getElementById('ideaBody'))return;let q=(ideaSearch?.value||'').toLowerCase(),f=ideaType?.value||'';let rows=ideas.filter(x=>(!q||x.title.toLowerCase().includes(q))&&(!f||x.format===f));ideaBody.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.title)}</b></td><td>${esc(x.format)}</td><td><span class="status">${esc(x.priority)}</span></td><td>${esc(x.notes||'')}</td><td><button class="btn" onclick="editIdea(${x.id})">Edit</button> <button class="btn" onclick="promoteIdea(${x.id})">Masuk Pipeline</button> <button class="btn" onclick="deleteIdea(${x.id})">Hapus</button></td></tr>`).join('')||'<tr><td colspan="5">Belum ada ide.</td></tr>'}
-function editIdea(id){const x=ideas.find(a=>a.id===id);if(!x)return;modalContent.innerHTML=`<h2>Edit Ide</h2><div class="form"><label>Judul / ide<input id="eititle" value="${escAttr(x.title)}"></label><label>Format<select id="eiformat">${['Carousel','Reels',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>Prioritas<select id="eipriority">${['Tinggi','Sedang','Rendah'].map(v=>`<option ${v===x.priority?'selected':''}>${v}</option>`).join('')}</select></label><label>Catatan<textarea id="einotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateIdea(${id})">Simpan Perubahan</button></div>`;modal.classList.add('show')}
+function renderIdeas(){if(!document.getElementById('ideaBody'))return;let q=(ideaSearch?.value||'').toLowerCase(),f=ideaType?.value||'';let rows=ideas.filter(x=>(!q||String(x.title||'').toLowerCase().includes(q))&&(!f||x.format===f));ideaBody.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.title)}</b></td><td>${esc(x.format)}</td><td><span class="status">${esc(x.priority)}</span></td><td>${esc(x.notes||'')}</td><td><button class="btn" onclick="editIdea(${x.id})">Edit</button> <button class="btn" onclick="promoteIdea(${x.id})">Masuk Pipeline</button> <button class="btn" onclick="deleteIdea(${x.id})">Hapus</button></td></tr>`).join('')||'<tr><td colspan="5">Belum ada ide.</td></tr>'}
+function editIdea(id){const x=ideas.find(a=>a.id===id);if(!x)return;modalContent.innerHTML=`<h2>Edit Ide</h2><div class="form"><label>Judul / ide<input id="eititle" value="${escAttr(x.title)}"></label><label>Format<select id="eiformat">${['Carousel','Video',"Today's Tale",'Postingan Hari Raya'].map(v=>`<option ${v===x.format?'selected':''}>${v}</option>`).join('')}</select></label><label>Prioritas<select id="eipriority">${['Tinggi','Sedang','Rendah'].map(v=>`<option ${v===x.priority?'selected':''}>${v}</option>`).join('')}</select></label><label>Catatan<textarea id="einotes">${esc(x.notes||'')}</textarea></label><button class="btn primary" onclick="updateIdea(${id})">Simpan Perubahan</button></div>`;modal.classList.add('show')}
 async function updateIdea(id){const x=ideas.find(a=>a.id===id);if(!x)return;const next={...x,title:eititle.value.trim(),format:eiformat.value,priority:eipriority.value,notes:einotes.value};if(!next.title)return alert('Judul ide wajib diisi.');try{await remoteUpsert('ideas',next);await writeActivity('UPDATE','idea',id,{title:next.title});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
 async function createIdea(){const t=ititle.value.trim();if(!t)return alert('Judul ide wajib diisi.');const item={id:Date.now(),title:t,format:iformat.value,priority:ipriority.value,notes:inotes.value};try{await remoteUpsert('ideas',item);await writeActivity('CREATE','idea',item.id,{title:item.title});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
 async function deleteIdea(id){const x=ideas.find(a=>a.id===id);if(!x||!confirm(`Hapus “${x.title}”?`))return;try{await remoteDelete('ideas',id);await writeActivity('DELETE','idea',id,{title:x.title});await refreshRemote();alert('✓ Berhasil dihapus')}catch(e){alert('⚠ Gagal menghapus: '+e.message)}}
@@ -1010,9 +1071,69 @@ async function createPerformance(){if(!pcontent.value)return alert('Belum ada ko
 function editPerformance(id){const x=performance.find(a=>a.id===id);if(!x)return;modalContent.innerHTML=`<h2>Edit Data Performa</h2><div class="form"><label>Reach<input id="ereach" type="number" min="0" value="${x.reach||0}"></label><label>Views<input id="eviews" type="number" min="0" value="${x.views||0}"></label><label>Likes<input id="elikes" type="number" min="0" value="${x.likes||0}"></label><label>Comments<input id="ecomments" type="number" min="0" value="${x.comments||0}"></label><label>Shares<input id="eshares" type="number" min="0" value="${x.shares||0}"></label><label>Saves<input id="esaves" type="number" min="0" value="${x.saves||0}"></label><button class="btn primary" onclick="updatePerformance(${id})">Simpan Perubahan</button></div>`;modal.classList.add('show')}
 async function updatePerformance(id){const x=performance.find(a=>a.id===id);if(!x)return;const next={...x,reach:+ereach.value||0,views:+eviews.value||0,likes:+elikes.value||0,comments:+ecomments.value||0,shares:+eshares.value||0,saves:+esaves.value||0};try{await patchRemotePerformance(next);const c=data.find(a=>a.id===next.contentId);await writeActivity('UPDATE','performance',id,{title:c?.title||'Konten'});closeModal();await refreshRemote();alert('✓ Tersimpan')}catch(e){alert('⚠ Gagal menyimpan: '+e.message)}}
 async function deletePerformance(id){const x=performance.find(a=>a.id===id);if(!x||!confirm('Hapus data performa ini?'))return;try{await remoteDelete('performance',id);const c=data.find(a=>a.id===x.contentId);await writeActivity('DELETE','performance',id,{title:c?.title||'Konten'});await refreshRemote();alert('✓ Berhasil dihapus')}catch(e){alert('⚠ Gagal menghapus: '+e.message)}}
-function renderAnalytics(){if(!document.getElementById('performanceBody'))return;analyticsCards.innerHTML=[['TOTAL REACH',fmt(performance.reduce((a,x)=>a+(+x.reach||0),0))],['TOTAL VIEWS',fmt(performance.reduce((a,x)=>a+(+x.views||0),0))],['KONTEN DIANALISIS',performance.length],['AVERAGE ER',(performance.length?performance.reduce((a,x)=>a+er(x),0)/performance.length:0).toFixed(2)+'%']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('');performanceBody.innerHTML=performance.map(p=>{const c=data.find(x=>x.id===p.contentId);return `<tr><td><b>${esc(c?.title||'-')}</b></td><td>${esc(c?.format||'-')}</td><td>${fmt(p.reach)}</td><td>${fmt(p.views)}</td><td>${fmt(p.likes)}</td><td>${fmt(p.shares)}</td><td>${fmt(p.saves)}</td><td>${er(p).toFixed(2)}%</td><td><button class="btn" onclick="editPerformance(${p.id})">Edit</button> <button class="btn" onclick="deletePerformance(${p.id})">Hapus</button></td></tr>`}).join('')||'<tr><td colspan="10">Belum ada data.</td></tr>'}
+function renderAnalytics(){
+  if(!document.getElementById('performanceBody'))return;
+  const pf=document.getElementById('analyticsPlatform')?.value||'';
+  const cf=document.getElementById('analyticsChannel')?.value||'';
+  const filtered=performance.filter(p=>(!pf||p.platform===pf)&&(!cf||p.channel===cf));
+  const channels=[...new Set(performance.filter(p=>!pf||p.platform===pf).map(p=>p.channel).filter(Boolean))];
+  const channelEl=document.getElementById('analyticsChannel');
+  if(channelEl){
+    const current=channelEl.value;
+    channelEl.innerHTML='<option value="">Semua channel</option>'+channels.map(c=>`<option value="${escAttr(c)}">${esc(c)}</option>`).join('');
+    if(channels.includes(current))channelEl.value=current;
+  }
+  const sum=k=>filtered.reduce((a,x)=>a+(Number(x[k])||0),0);
+  const avgER=filtered.length?filtered.reduce((a,x)=>a+er(x),0)/filtered.length:0;
+  const watch=sum('watchTimeMinutes');
+  const comments=sum('comments'),shares=sum('shares'),likes=sum('likes');
+  analyticsCards.innerHTML=[
+    ['TOTAL REACH',fmt(sum('reach'))],
+    ['TOTAL VIEWS',fmt(sum('views'))],
+    ['INTERAKSI',fmt(likes+comments+shares+sum('saves'))],
+    ['AVERAGE ER',avgER.toFixed(2)+'%'],
+    ['DATA PERFORMA',filtered.length],
+    ['WATCH TIME',fmt(watch)+' menit']
+  ].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="big" style="font-size:${String(x[1]).length>12?'20px':'27px'}">${x[1]}</div></div>`).join('');
 
-function exportData(){const payload={exported_at:new Date().toISOString(),contents:data,ideas,performance,profiles:members,workspace_settings:{id:workspaceSettingsId,monthly_target:MONTHLY_TARGET},activity_logs:activityLogs};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kronieka-backup-'+todayISO()+'.json';a.click();URL.revokeObjectURL(a.href)}
+  const groups={};
+  filtered.forEach(p=>{const key=platformLabel(p);(groups[key]??=[]).push(p)});
+  formatAnalytics.innerHTML=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([label,arr])=>{
+    const views=arr.reduce((a,x)=>a+(Number(x.views)||0),0);
+    const reach=arr.reduce((a,x)=>a+(Number(x.reach)||0),0);
+    const e=arr.reduce((a,x)=>a+er(x),0)/arr.length;
+    return `<div class="recapline"><span><b>${esc(label)}</b><br><span class="muted">${arr.length} data · ${fmt(reach)} reach · ${fmt(views)} views</span></span><b>${e.toFixed(2)}%</b></div>`;
+  }).join('')||'<div class="muted">Belum ada data.</div>';
+
+  const top=[...filtered].sort((a,b)=>{
+    const ia=(Number(b.views)||0)+(Number(b.likes)||0)+(Number(b.comments)||0)+(Number(b.shares)||0);
+    const ib=(Number(a.views)||0)+(Number(a.likes)||0)+(Number(a.comments)||0)+(Number(a.shares)||0);
+    return ia-ib;
+  }).slice(0,5);
+  topAnalytics.innerHTML=top.map((p,i)=>{
+    const c=data.find(x=>String(x.id)===String(p.contentId||p.content_id));
+    return `<div class="recapline"><span>${i+1}. <b>${esc(c?.title||'Konten')}</b><br><span class="muted">${esc(platformLabel(p))} · ${fmt(p.views)} views</span></span><b>${er(p).toFixed(2)}%</b></div>`;
+  }).join('')||'<div class="muted">Belum ada data.</div>';
+
+  performanceBody.innerHTML=filtered.map(p=>{
+    const c=data.find(x=>String(x.id)===String(p.contentId||p.content_id));
+    const watch=Number(p.watchTimeMinutes??p.watch_time_minutes)||0;
+    const avg=Number(p.avgViewDurationSeconds??p.avg_view_duration_seconds)||0;
+    const date=p.publishedAt||p.published_at||'';
+    return `<tr>
+      <td><b>${esc(c?.title||'-')}</b><br><span class="muted">${esc(c?.format||'-')}</span></td>
+      <td>${esc(p.platform||'-')}</td>
+      <td>${esc(p.channel||'-')}</td>
+      <td>${date?esc(new Date(date+'T00:00:00').toLocaleDateString('id-ID')):'-'}</td>
+      <td>${fmt(p.reach)}</td><td>${fmt(p.views)}</td><td>${fmt(p.likes)}</td><td>${fmt(p.comments)}</td>
+      <td>${fmt(p.shares)}</td><td>${fmt(p.saves)}</td><td>${fmt(watch)} mnt</td><td>${fmt(avg)} dtk</td>
+      <td><b>${er(p).toFixed(2)}%</b></td>
+      <td><button class="btn" onclick="editPerformance(${p.id})">Edit</button> <button class="btn" onclick="deletePerformance(${p.id})">Hapus</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="14" class="muted">Belum ada data.</td></tr>';
+}
+
+function exportData(){const payload={schema_version:'10.3',exported_at:new Date().toISOString(),contents:data,ideas,performance,profiles:members,workspace_settings:{id:workspaceSettingsId,monthly_target:MONTHLY_TARGET},activity_logs:activityLogs};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kronieka-backup-'+todayISO()+'.json';a.click();URL.revokeObjectURL(a.href)}
 
 // Replace navigation handler so Activity Log is included.
 const _oldPage=window.page;window.page=function(id,btn){document.querySelectorAll('main section').forEach(x=>x.style.display='none');const sec=document.getElementById(id);if(!sec)return;sec.style.display='block';document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');if(id==='content')renderTable();if(id==='calendar')renderCalendar();if(id==='recap')renderRecap();if(id==='monthly')renderMonthly();if(id==='team')renderTeam();if(id==='workflow')renderWorkflow();if(id==='analytics')renderAnalytics();if(id==='ideas')renderIdeas();if(id==='activity')loadActivity(false)};
@@ -1085,3 +1206,14 @@ setTimeout(()=>{populateFilters();render();renderActivity();setConnection(remote
 
 </body>
 </html>
+<script>
+function toggleMobileNav(force){
+  const side=document.querySelector('.side'),overlay=document.getElementById('mobileOverlay');
+  if(!side||!overlay)return;
+  const open=typeof force==='boolean'?force:!side.classList.contains('open');
+  side.classList.toggle('open',open);overlay.classList.toggle('show',open);
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('.nav button') && window.innerWidth<=650) toggleMobileNav(false);
+});
+</script>
